@@ -72,7 +72,7 @@ All self-hosted, all free for commercial use, none of them the default sans.
 | Body | **Switzer** | Fontshare (ITF) |
 | Data, specs, labels, the rail | **JetBrains Mono** | OFL |
 
-**The mono is doing real work.** Every number on the site , contract values, dates, certification references, section identifiers, project codes , is set in mono. That single decision creates the technical-document feeling more than any other element, and it costs nothing.
+**The mono is doing real work.** Every number on the site, contract values, dates, certification references, section identifiers, project codes, is set in mono. That single decision creates the technical-document feeling more than any other element, and it costs nothing.
 
 Type scale: 1.25 ratio. Include one deliberately oversized display size used exactly twice on the site, for the founding year and the project count.
 

@@ -106,6 +106,8 @@ Lucide is installed as a shadcn dependency. Do not import from it. Icons come fr
 
 Server components by default. `"use client"` only for state, effects or browser APIs, pushed as far down the tree as possible.
 
+This is Next.js 16, which has breaking changes from earlier versions. Read the relevant guide in `node_modules/next/dist/docs/` before writing routing, caching or data-fetching code rather than relying on training data.
+
 ---
 
 ## Typography
@@ -191,3 +193,4 @@ Playwright covering all three form paths and the capability statement download. 
 - When you finish, say what you changed and what you deliberately did not change.
 - If a request conflicts with a rule in this file, say so before proceeding.
 - `pnpm check-content` runs as part of the build and rejects em dashes, en dashes and curly quotes in `content/`. Write plain ASCII punctuation from the start rather than fixing it after a failed build.
+- Read only the files needed for the specific task. Do not read `docs/brief.md` or `docs/art-direction.md` for small edits to existing components. Ask if you are unsure whether a file is relevant.
