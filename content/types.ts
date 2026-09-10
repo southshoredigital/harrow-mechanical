@@ -1,5 +1,5 @@
 /**
- * Harrow Mechanical — content types
+ * Harrow Mechanical , content types
  *
  * All site content lives in typed files in this folder. There is no CMS.
  * Import the arrays directly in server components. Never fetch at runtime.
@@ -34,7 +34,7 @@ export type Scale = (typeof SCALES)[number]
 export type Image = {
   src: string
   alt: string
-  /** Intrinsic dimensions. Required — missing dimensions cause layout shift. */
+  /** Intrinsic dimensions. Required , missing dimensions cause layout shift. */
   width: number
   height: number
 }

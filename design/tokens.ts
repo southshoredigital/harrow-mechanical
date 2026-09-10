@@ -1,5 +1,5 @@
 /**
- * Harrow Mechanical — design tokens
+ * Harrow Mechanical , design tokens
  *
  * The single source of truth for every design value on this site.
  * A literal hex code or px value anywhere in a component is a bug.
@@ -166,7 +166,7 @@ export const layout = {
 } as const
 
 /**
- * Riser schematic — the memorable moment.
+ * Riser schematic , the memorable moment.
  * Scroll-linked, not time-linked. Renders complete and static
  * under prefers-reduced-motion.
  */

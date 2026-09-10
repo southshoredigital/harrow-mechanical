@@ -61,12 +61,12 @@ Their words: they get invited to tender on reputation and relationships, and the
 
 ### Required structure
 
-- **Projects** — filterable by sector, system type and contract scale. This is the most important part of the site and should be treated as the centrepiece, not a gallery tucked in the footer.
-- **Capabilities** — by system, not by marketing category. Mechanical, hydraulic, controls and BMS, commissioning, maintenance.
-- **Accreditations and compliance** — displayed, current, with a document library holding insurance certificates, licences, ISO certification, safety statistics and SWMS templates.
-- **Careers** — real roles, real people, plain language about what the work is.
-- **About** — 30 years of continuity is the asset. Say it with numbers.
-- **Contact** — separate paths for tender enquiry, service call and careers. One generic form is a failure.
+- **Projects** , filterable by sector, system type and contract scale. This is the most important part of the site and should be treated as the centrepiece, not a gallery tucked in the footer.
+- **Capabilities** , by system, not by marketing category. Mechanical, hydraulic, controls and BMS, commissioning, maintenance.
+- **Accreditations and compliance** , displayed, current, with a document library holding insurance certificates, licences, ISO certification, safety statistics and SWMS templates.
+- **Careers** , real roles, real people, plain language about what the work is.
+- **About** , 30 years of continuity is the asset. Say it with numbers.
+- **Contact** , separate paths for tender enquiry, service call and careers. One generic form is a failure.
 
 ### Explicitly out of scope
 

@@ -9,7 +9,7 @@ import type { ComplianceDocument } from './types'
  */
 export const documents: ComplianceDocument[] = [
   {
-    title: 'Certificate of Currency — Public and Products Liability',
+    title: 'Certificate of Currency: Public and Products Liability',
     category: 'Insurance',
     file: '/documents/public-products-liability.pdf',
     fileSize: 184_000,
@@ -17,10 +17,45 @@ export const documents: ComplianceDocument[] = [
     expiryDate: '2027-06-30',
   },
 
-  // Suggested remaining five:
-  //  - Workers Compensation certificate        (Insurance)
-  //  - Plumbing Industry Commission licence    (Licence)
-  //  - Refrigerant Handling Licence, ARC        (Licence)
-  //  - ISO 9001 Quality Management             (Certification)
-  //  - Safety performance statement, LTIFR      (Safety)
+  {
+    title: 'Certificate of Currency: Workers Compensation',
+    category: 'Insurance',
+    file: '/documents/workers-compensation.pdf',
+    fileSize: 176_000,
+    issueDate: '2026-07-01',
+    expiryDate: '2027-06-30',
+  },
+
+  {
+    title: 'Plumbing Industry Commission Licence: Mechanical Services',
+    category: 'Licence',
+    file: '/documents/plumbing-industry-commission-licence.pdf',
+    fileSize: 142_000,
+    issueDate: '2024-03-18',
+  },
+
+  {
+    title: 'Refrigerant Handling Licence: ARCtick',
+    category: 'Licence',
+    file: '/documents/arc-refrigerant-handling-licence.pdf',
+    fileSize: 138_000,
+    issueDate: '2019-11-04',
+  },
+
+  {
+    title: 'ISO 9001:2015 Quality Management Certification',
+    category: 'Certification',
+    file: '/documents/iso-9001-quality-management.pdf',
+    fileSize: 261_000,
+    issueDate: '2025-05-14',
+    expiryDate: '2028-05-13',
+  },
+
+  {
+    title: 'Safety Performance Statement: LTIFR',
+    category: 'Safety',
+    file: '/documents/safety-performance-statement.pdf',
+    fileSize: 97_000,
+    issueDate: '2026-08-01',
+  },
 ]

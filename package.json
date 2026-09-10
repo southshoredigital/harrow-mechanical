@@ -4,8 +4,9 @@
   "private": true,
   "scripts": {
     "tokens": "node --experimental-strip-types scripts/generate-tokens.mjs",
+    "check-content": "node scripts/check-content.mjs",
     "dev": "pnpm tokens && next dev --turbopack",
-    "build": "pnpm tokens && next build --turbopack",
+    "build": "pnpm tokens && pnpm check-content && next build --turbopack",
     "start": "next start",
     "lint": "eslint"
   },
@@ -28,6 +29,7 @@
     "tw-animate-css": "^1.4.0",
     "zod": "^4.5.4"
   },
+  "packageManager": "pnpm@12.3.4",
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@playwright/test": "^1.63.0",
@@ -39,6 +41,5 @@
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
     "typescript": "^5"
-  },
-  "packageManager": "pnpm@12.3.4"
+  }
 }

@@ -63,6 +63,7 @@ These override anything generic. They are what makes this site this site.
 /contact                 three separate paths: tender, service, careers
 ```
 
+
 **Explicitly out of scope:** blog, news, social feeds, live chat. Do not build them or suggest them.
 
 **Contact must not be one generic form.** Three distinct entry paths with different fields and different routing.
@@ -105,8 +106,6 @@ Lucide is installed as a shadcn dependency. Do not import from it. Icons come fr
 
 Server components by default. `"use client"` only for state, effects or browser APIs, pushed as far down the tree as possible.
 
-Icons: **Iconoir**, not Lucide. Lucide is the default on too many sites and this one should not share its icon voice.
-
 ---
 
 ## Typography
@@ -135,7 +134,8 @@ Do not produce these. If a layout you are about to build matches one, propose an
 - Uniform border radius (here, any radius at all)
 - Fade-up-on-scroll applied uniformly
 - A "trusted by" logo strip
-- Copy shaped like "Empowering businesses to…" or "Your trusted partner in…"
+- Copy shaped like "Empowering businesses to..." or "Your trusted partner in..."
+- Em dashes (—) and en dashes (–) anywhere in content or copy. Use a comma, a colon, a full stop, or restructure the sentence. Hyphens in compound words are fine. Curly quotes and apostrophes are banned too, straight ASCII only.
 
 ---
 
@@ -172,7 +172,7 @@ Unique title and description per page via `lib/seo` · canonical URLs · Open Gr
 
 Three paths: tender enquiry, service call, careers. Different fields, different routing, different confirmation copy.
 
-Validated client and server side with the same Zod schema · Cloudflare Turnstile on all three · sent via Resend and logged · designed success and error states.
+Validated client and server side with the same Zod schema · honeypot field for spam · sent via Resend and logged · designed success and error states.
 
 ---
 
@@ -190,3 +190,4 @@ Playwright covering all three form paths and the capability statement download. 
 - Do not modify files outside the scope of the request.
 - When you finish, say what you changed and what you deliberately did not change.
 - If a request conflicts with a rule in this file, say so before proceeding.
+- `pnpm check-content` runs as part of the build and rejects em dashes, en dashes and curly quotes in `content/`. Write plain ASCII punctuation from the start rather than fixing it after a failed build.
