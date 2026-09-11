@@ -259,7 +259,13 @@ export const layout = {
 export const schematic = {
   strokeWidth: 1.5,
   strokeWidthActive: 2.5,
+  /**
+   * The drawing grid: slab lines and the building outline. Hairline, and
+   * deliberately quieter than the services drawn on top of it.
+   */
+  strokeWidthGrid: 1,
   strokeInactive: color.steel,
   strokeActive: color.signal,
+  strokeGrid: color.border.hairline,
   labelDelay: 120,
 } as const
