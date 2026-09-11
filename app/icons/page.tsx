@@ -28,7 +28,7 @@ export default function IconsCheckPage() {
       <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
         Icon check / temporary
       </p>
-      <h1 className="font-display text-2xl leading-heading tracking-display mt-4 text-text-primary">
+      <h1 className="font-display text-2xl tracking-display mt-4 text-text-primary">
         Capability symbols
       </h1>
 

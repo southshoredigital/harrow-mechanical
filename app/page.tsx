@@ -4,10 +4,10 @@ export default function Home() {
       <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
         Harrow Mechanical / 001
       </p>
-      <h1 className="font-display text-4xl leading-tight tracking-display mt-8">
+      <h1 className="font-display text-4xl tracking-display mt-8">
         Mechanical services
       </h1>
-      <p className="font-body text-base leading-body max-w-[var(--measure)] mt-6">
+      <p className="font-body text-base max-w-[var(--measure)] mt-6">
         Testing the token system. This paragraph is Switzer at base size with
         body leading, capped at the measure defined in tokens.
       </p>

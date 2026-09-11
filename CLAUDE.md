@@ -40,6 +40,7 @@ These override anything generic. They are what makes this site this site.
 - **Nothing fades in.** Reveals are clip-path or mask wipes, left to right, using `motion.ease.plotter`. If you are about to write an opacity transition on scroll, stop.
 - **Every number on this site is set in mono.** Contract values, dates, certification references, section identifiers, project codes, staff counts, safety statistics. This is the strongest single element of the design language.
 - **`color.signal` appears at most three times per viewport.** It is an accent, not a brand colour. Track it as you build.
+- **`color.signal` is for headings, rules and active states only. Never body text.** It measures 3.47:1 against paper, which is AA for large text and fails for anything set small. If a sentence needs emphasis, restructure it or use `color.text.primary`. Secondary text is `color.text.secondary`, which clears 5:1.
 - **`fontSize.hero` is used exactly twice on the entire site:** the founding year on the about page and the project count on the homepage. Nowhere else.
 - **Hover states are instant.** `motion.hover` is 0. Mechanical, not soft.
 - **Every claim carries a number, a date, a certification reference or a project name.** If copy could appear unchanged on a competitor's site, rewrite it.

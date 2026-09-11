@@ -9,35 +9,63 @@
  * without changing the art direction document to match.
  */
 
-export const color = {
+/**
+ * The palette. Five values, and nothing else may be introduced.
+ *
+ * `steel` clears 5:1 against paper. It is the floor for secondary text and
+ * it was chosen for a phone screen in direct sun, not for the WCAG minimum.
+ */
+const palette = {
   ink: '#141413',
   paper: '#F5F3EE',
-  steel: '#6E6E68',
+  steel: '#666660',
   mist: '#DDDAD1',
   signal: '#E2521B',
+  subtle: '#EDEAE3',
+  error: '#9B2C15',
+} as const
+
+export const color = {
+  ink: palette.ink,
+  paper: palette.paper,
+  steel: palette.steel,
+  mist: palette.mist,
+  signal: palette.signal,
 
   // Semantic aliases. Components use these, never the raw names above.
+  // They point at the palette rather than repeating a hex, so a palette
+  // change cannot leave a stale copy behind.
   text: {
-    primary: '#141413',
-    secondary: '#6E6E68',
-    inverse: '#F5F3EE',
-    accent: '#E2521B',
+    primary: palette.ink,
+    secondary: palette.steel,
+    inverse: palette.paper,
+    accent: palette.signal,
   },
   surface: {
-    page: '#F5F3EE',
-    inverse: '#141413',
-    subtle: '#EDEAE3',
+    page: palette.paper,
+    inverse: palette.ink,
+    subtle: palette.subtle,
   },
   border: {
-    hairline: '#DDDAD1',
-    strong: '#6E6E68',
-    accent: '#E2521B',
+    hairline: palette.mist,
+    strong: palette.steel,
+    accent: palette.signal,
+  },
+  /**
+   * Form validation and destructive actions only. 6.85:1 on paper.
+   * Never used decoratively: it is not a second accent.
+   */
+  status: {
+    error: palette.error,
   },
 } as const
 
 /**
  * Signal budget: at most three occurrences per viewport.
  * If a fourth is needed, something else must lose it.
+ *
+ * Signal is 3.47:1 on paper, which is AA for large text only. It is for
+ * headings, rules and active states. It never sets body copy.
  */
 export const signalBudgetPerViewport = 3
 
@@ -77,6 +105,31 @@ export const lineHeight = {
   body: 1.6,
   data: 1.3,
 } as const
+
+/**
+ * The leading each size carries by default, emitted as
+ * `--text-<size>--line-height` so a Tailwind `text-*` utility brings its own
+ * leading and cannot silently fall back to a framework default.
+ *
+ * The pairing follows what each size is for: the small sizes are labels and
+ * data, the middle sizes are read in paragraphs, the large sizes are set as
+ * headings and the display sizes are set tight enough to read as a mark.
+ *
+ * Typed against fontSize, so adding a size without a leading fails the build.
+ * Override with an explicit `leading-*` only where a specific block needs it.
+ */
+export const fontLeading: Record<keyof typeof fontSize, number> = {
+  xs: lineHeight.data,
+  sm: lineHeight.body,
+  base: lineHeight.body,
+  md: lineHeight.body,
+  lg: lineHeight.heading,
+  xl: lineHeight.heading,
+  '2xl': lineHeight.heading,
+  '3xl': lineHeight.tight,
+  '4xl': lineHeight.tight,
+  hero: lineHeight.tight,
+}
 
 export const letterSpacing = {
   display: '-0.02em',
@@ -139,16 +192,49 @@ export const motion = {
   },
   stagger: 80,
   hover: 0,
+  /**
+   * Smooth scroll. Lenis owns the single rAF loop and ScrollTrigger reads
+   * from it, so there is one scroll position, not two.
+   * `lerp` is the only tunable: higher is tighter to the input device.
+   */
+  scroll: {
+    lerp: 0.1,
+  },
+} as const
+
+/**
+ * Focus is visible and is never the browser default.
+ * Signal is allowed here outside the three-per-viewport budget:
+ * only one element is focused at a time.
+ */
+export const focus = {
+  color: color.signal,
+  width: '2px',
+  offset: '2px',
 } as const
 
 /**
  * The specification rail. Fixed left column on desktop,
  * sticky single-line strip on mobile.
  */
+/**
+ * Below `lg` the rail becomes two sticky lines: the identifier strip, then
+ * the scrolling section index. Both are 2.75rem, which is the 44px minimum
+ * tap target, not a number picked for looks.
+ *
+ * The combined height is derived, never written down twice. Anything that has
+ * to clear the sticky chrome, such as scroll-margin on an anchor target, uses
+ * `mobileTotalHeight` so it cannot drift when one line changes.
+ */
+const railMobileStripRem = 2.75
+const railMobileIndexRem = 2.75
+
 export const rail = {
   width: '13rem',
   widthWide: '16rem',
-  mobileHeight: '2.75rem',
+  mobileHeight: `${railMobileStripRem}rem`,
+  mobileIndexHeight: `${railMobileIndexRem}rem`,
+  mobileTotalHeight: `${railMobileStripRem + railMobileIndexRem}rem`,
 } as const
 
 export const breakpoint = {

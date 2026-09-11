@@ -34,27 +34,30 @@
 
 /*
   shadcn's semantic tokens, repointed at the Harrow palette.
-  Never edit values here. Change design/tokens.ts and run `pnpm tokens`.
+
+  Every value here is a reference into app/tokens.css, never a literal, so a
+  palette change in design/tokens.ts reaches shadcn's primitives too. A hex
+  code in this block is a bug: it will go stale the first time a token moves.
 */
 :root {
-  --background: #F5F3EE;
-  --foreground: #141413;
-  --card: #F5F3EE;
-  --card-foreground: #141413;
-  --popover: #F5F3EE;
-  --popover-foreground: #141413;
-  --primary: #141413;
-  --primary-foreground: #F5F3EE;
-  --secondary: #EDEAE3;
-  --secondary-foreground: #141413;
-  --muted: #EDEAE3;
-  --muted-foreground: #6E6E68;
-  --accent: #E2521B;
-  --accent-foreground: #F5F3EE;
-  --destructive: #9B2C15;
-  --border: #DDDAD1;
-  --input: #DDDAD1;
-  --ring: #E2521B;
+  --background: var(--color-surface-page);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-surface-page);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-surface-page);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-ink);
+  --primary-foreground: var(--color-text-inverse);
+  --secondary: var(--color-surface-subtle);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-surface-subtle);
+  --muted-foreground: var(--color-text-secondary);
+  --accent: var(--color-signal);
+  --accent-foreground: var(--color-text-inverse);
+  --destructive: var(--color-status-error);
+  --border: var(--color-border-hairline);
+  --input: var(--color-border-hairline);
+  --ring: var(--focus-color);
   --radius: 0;
 }
 
@@ -70,5 +73,16 @@
 
   html {
     -webkit-font-smoothing: antialiased;
+  }
+}
+
+/*
+  Focus is visible everywhere and is never the browser default.
+  Values come from `focus` in design/tokens.ts via app/tokens.css.
+*/
+@utility focus-ring {
+  &:focus-visible {
+    outline: var(--focus-width) solid var(--focus-color);
+    outline-offset: var(--focus-offset);
   }
 }
