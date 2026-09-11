@@ -33,8 +33,8 @@ export const projects: Project[] = [
       'Delivered across fourteen months with no unplanned theatre downtime. Commissioning witnessed by the hospital engineering team and independent commissioning agent. Handed over with full O&M documentation and twelve months defects liability.',
     images: [
       {
-        src: '/images/projects/northfield-plant-room.jpg',
-        alt: 'Chiller plant room with primary hydronic pipework and pumps',
+        src: '/images/chiller-plant-room-01.jpg',
+        alt: 'Water cooled chillers and primary hydronic pipework in a plant room',
         width: 2400,
         height: 1600,
       },
@@ -67,8 +67,8 @@ export const projects: Project[] = [
       'Seven months. Air change rates and room pressure differentials measured against AusHFG Part D by an independent commissioning agent and witnessed by the health service engineering manager before occupancy. Both procedure rooms recorded at 20 air changes per hour at design flow.',
     images: [
       {
-        src: '/images/projects/frankston-day-procedure-unit-1.jpg',
-        alt: 'Procedure room ceiling with laminar supply diffuser and return grilles',
+        src: '/images/ductwork-ceiling-void-01.jpg',
+        alt: 'Ductwork with branch takeoffs running through a ceiling void',
         width: 2400,
         height: 1600,
       },
@@ -100,16 +100,16 @@ export const projects: Project[] = [
       'Cut over across three weekends in October and November 2021 with no room off heating for more than six hours. Site gas consumption metered at 31% below the previous year over the following winter on comparable degree days. Facility rolled onto a scheduled maintenance contract in December 2021.',
     images: [
       {
-        src: '/images/projects/warragul-aged-care-hydronic-replacement-1.jpg',
-        alt: 'Boiler room with three cascade controlled condensing boilers and headers',
+        src: '/images/chiller-plant-room-02.jpg',
+        alt: 'Plant room viewed from floor level with condensing boilers and overhead pipework risers',
         width: 2400,
-        height: 1600,
+        height: 3600,
       },
       {
-        src: '/images/projects/warragul-aged-care-hydronic-replacement-2.jpg',
-        alt: 'Insulated hydronic flow and return pipework with valve labelling',
+        src: '/images/ductwork-ceiling-void-02.jpg',
+        alt: 'Insulated hydronic pipework packed into a shallow ceiling void',
         width: 2400,
-        height: 1600,
+        height: 1785,
       },
     ],
   },
@@ -139,16 +139,16 @@ export const projects: Project[] = [
       'Sixteen months. All eighteen fume cupboards containment tested to AS/NZS 2243.8 with the building at design airflow, results issued to the university safety officer before occupancy. Building handed over on 12 January 2024 ahead of semester one.',
     images: [
       {
-        src: '/images/projects/clayton-research-building-mechanical-services-1.jpg',
-        alt: 'Laboratory fume cupboards with sash position indicators and airflow monitors',
+        src: '/images/rooftop-plant-01.jpg',
+        alt: 'Roof mounted exhaust fans and discharge ductwork on a commercial roof',
         width: 2400,
         height: 1600,
       },
       {
-        src: '/images/projects/clayton-research-building-mechanical-services-2.jpg',
-        alt: 'Roof mounted laboratory exhaust fans with high velocity discharge stacks',
+        src: '/images/switchboard-panel-01.jpg',
+        alt: 'Open switchboard panel with labelled circuit breakers and wiring for BMS integration',
         width: 2400,
-        height: 1600,
+        height: 1346,
       },
     ],
   },
@@ -178,8 +178,8 @@ export const projects: Project[] = [
       'Handed over 20 January 2023, five days before term one. Airflows, CO2 sensor calibration and gymnasium boundary noise witnessed by the project manager. Twelve month defects liability completed January 2024.',
     images: [
       {
-        src: '/images/projects/cranbourne-east-teaching-wing-1.jpg',
-        alt: 'Roof mounted packaged units on plinths above a school gymnasium',
+        src: '/images/rooftop-plant-01.jpg',
+        alt: 'Roof mounted packaged units on plinths above a commercial roof',
         width: 2400,
         height: 1600,
       },
@@ -212,16 +212,16 @@ export const projects: Project[] = [
       'Integrated systems testing ran eleven days in February 2026 at 100% of design IT load on 4.5MW of load banks. All 42 failure scenarios were executed with no cold aisle exceeding 27°C. Commissioning records issued to AIRAH DA19 with the isolation schedule as a handover document.',
     images: [
       {
-        src: '/images/projects/truganina-data-centre-mechanical-package-1.jpg',
-        alt: 'External chiller yard with four air cooled chillers and dual path headers',
+        src: '/images/chiller-plant-room-01.jpg',
+        alt: 'Air cooled chillers and primary variable flow headers in a plant room',
         width: 2400,
         height: 1600,
       },
       {
-        src: '/images/projects/truganina-data-centre-mechanical-package-2.jpg',
-        alt: 'Data hall cold aisle with in row cooling units between cabinet rows',
+        src: '/images/switchboard-panel-02.jpg',
+        alt: 'Dual redundant BMS controller cabinet with labelled cable terminations',
         width: 2400,
-        height: 1600,
+        height: 1589,
       },
     ],
     featured: true,
@@ -252,10 +252,10 @@ export const projects: Project[] = [
       'Ten units replaced over 32 night shifts between March and November 2022 with no customer affecting incident recorded. Facility PUE metered at 1.42 across the following twelve months against 1.71 for the twelve months before the works. Rolled onto a scheduled maintenance contract in December 2022.',
     images: [
       {
-        src: '/images/projects/notting-hill-colocation-cooling-retrofit-1.jpg',
-        alt: 'Overhead chilled water pipework above contained cabinet rows in a data hall',
+        src: '/images/ductwork-ceiling-void-02.jpg',
+        alt: 'Overhead chilled water pipework packed into a shallow ceiling void',
         width: 2400,
-        height: 1600,
+        height: 1785,
       },
     ],
     featured: true,
@@ -286,16 +286,16 @@ export const projects: Project[] = [
       'Twelve months with no production shift lost to the works. Glycol flow held at −4°C ±0.5°C across all fourteen users at full process load during witnessed testing. Cold store pull down from ambient to 2°C recorded at 26 hours.',
     images: [
       {
-        src: '/images/projects/dandenong-south-process-chilling-plant-1.jpg',
+        src: '/images/chiller-plant-room-02.jpg',
         alt: 'Glycol chiller skid with buffer tanks and insulated flow and return headers',
         width: 2400,
-        height: 1600,
+        height: 3600,
       },
       {
-        src: '/images/projects/dandenong-south-process-chilling-plant-2.jpg',
-        alt: 'Cold store ceiling evaporators above stainless clad walls',
+        src: '/images/ductwork-ceiling-void-04.jpg',
+        alt: 'Ductwork and cable tray sharing a ceiling void above a cold store',
         width: 2400,
-        height: 1600,
+        height: 3000,
       },
     ],
   },
@@ -325,10 +325,10 @@ export const projects: Project[] = [
       'Boundary noise measured at 39 dB(A) at the nearest residential façade with the plant at full duty, verified by an independent acoustic consultant in March 2021. Capture velocities recorded at all six hoods and issued with the licence compliance report.',
     images: [
       {
-        src: '/images/projects/bayswater-coatings-plant-ventilation-1.jpg',
-        alt: 'Extraction hoods above a coating line with ducted risers to roof plant',
+        src: '/images/ductwork-ceiling-void-05.jpg',
+        alt: 'Ductwork risers running vertically through a shaft to roof plant',
         width: 2400,
-        height: 1600,
+        height: 3600,
       },
     ],
     featured: true,
@@ -359,13 +359,13 @@ export const projects: Project[] = [
       'Practical completion 8 August 2025, two days inside the contract date. Pick face pull down from ambient to 4°C recorded at 19 hours with dock doors sealed. Smoke exhaust performance witnessed by the building surveyor and included in the essential safety measures schedule issued with the occupancy permit.',
     images: [
       {
-        src: '/images/projects/laverton-north-distribution-centre-1.jpg',
-        alt: 'Chilled pick face with ceiling mounted evaporators above racking aisles',
+        src: '/images/ductwork-ceiling-void-04.jpg',
+        alt: 'Ceiling mounted evaporators and ductwork above racking aisles',
         width: 2400,
-        height: 1600,
+        height: 3000,
       },
       {
-        src: '/images/projects/laverton-north-distribution-centre-2.jpg',
+        src: '/images/rooftop-plant-01.jpg',
         alt: 'Warehouse roof with smoke exhaust fans and condensing plant',
         width: 2400,
         height: 1600,
@@ -398,16 +398,16 @@ export const projects: Project[] = [
       'Nine months, one floor at a time. All 47 penetrations executed under the approved heritage permit with no amendment. Per floor energy metering handed over with the BMS, giving the owner separated data for the next NABERS rating year.',
     images: [
       {
-        src: '/images/projects/collins-street-heritage-office-hvac-replacement-1.jpg',
+        src: '/images/chiller-plant-room-01.jpg',
         alt: 'Sectional air handling unit installed in a narrow original plant room',
         width: 2400,
         height: 1600,
       },
       {
-        src: '/images/projects/collins-street-heritage-office-hvac-replacement-2.jpg',
-        alt: 'Chilled water risers on freestanding frames within a brick light well',
+        src: '/images/ductwork-ceiling-void-05.jpg',
+        alt: 'Chilled water risers on freestanding frames running vertically through a light well',
         width: 2400,
-        height: 1600,
+        height: 3600,
       },
     ],
     featured: true,
@@ -438,10 +438,10 @@ export const projects: Project[] = [
       'Four months. Balanced to design airflow with a maximum deviation of 6% across 38 outlets, recorded in the commissioning report issued at handover in March 2026. Tenancy moved onto a quarterly maintenance contract from April 2026.',
     images: [
       {
-        src: '/images/projects/moorabbin-office-fitout-1.jpg',
-        alt: 'Flat oval ductwork and VAV boxes in a shallow ceiling void above a fitout',
+        src: '/images/ductwork-ceiling-void-03.jpg',
+        alt: 'Flat oval ductwork and VAV boxes photographed looking up into a shallow ceiling void',
         width: 2400,
-        height: 1600,
+        height: 3188,
       },
     ],
   },

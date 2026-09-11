@@ -194,3 +194,4 @@ Playwright covering all three form paths and the capability statement download. 
 - If a request conflicts with a rule in this file, say so before proceeding.
 - `pnpm check-content` runs as part of the build and rejects em dashes, en dashes and curly quotes in `content/`. Write plain ASCII punctuation from the start rather than fixing it after a failed build.
 - Read only the files needed for the specific task. Do not read `docs/brief.md` or `docs/art-direction.md` for small edits to existing components. Ask if you are unsure whether a file is relevant.
+- Before any `git push`, run `pnpm build` and confirm it passes. Never push a failing build. Commit messages describe what changed, not which files were edited.
