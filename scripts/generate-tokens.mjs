@@ -12,6 +12,7 @@ import {
     motion,
     focus,
     rail,
+    tapTarget,
     breakpoint,
     layout,
 } from '../design/tokens.ts'
@@ -63,6 +64,7 @@ lines.push(`  --rail-width-wide: ${rail.widthWide};`)
 lines.push(`  --rail-mobile-height: ${rail.mobileHeight};`)
 lines.push(`  --rail-mobile-index-height: ${rail.mobileIndexHeight};`)
 lines.push(`  --rail-mobile-total-height: ${rail.mobileTotalHeight};`)
+lines.push(`  --tap-target: ${tapTarget};`)
 lines.push(`  --layout-max: ${layout.maxWidth};`)
 lines.push(`  --layout-gutter: ${layout.gutter};`)
 lines.push(`  --layout-gutter-wide: ${layout.gutterWide};`)

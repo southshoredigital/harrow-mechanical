@@ -1,8 +1,6 @@
 import type { Metadata } from "next"
 
 import { SmoothScroll } from "@/components/providers/SmoothScroll"
-import { SpecRail } from "@/components/sections/SpecRail"
-import { SITE_SECTIONS } from "@/content/sections"
 
 import { cabinet, switzer, jetbrains } from "./fonts"
 import "./globals.css"
@@ -16,8 +14,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  rail,
 }: {
   children: React.ReactNode
+  /** The specification rail, from the @rail slot so pages can give it data. */
+  rail: React.ReactNode
 }) {
   return (
     <html
@@ -34,7 +35,7 @@ export default function RootLayout({
           Skip to content
         </a>
 
-        <SpecRail identifier="Harrow Mechanical" sections={SITE_SECTIONS} />
+        {rail}
 
         <div className="lg:pl-[var(--rail-width)]">
           {/*

@@ -86,3 +86,13 @@
     outline-offset: var(--focus-offset);
   }
 }
+
+/*
+  The same outline without its own :focus-visible, for an element that shows
+  focus on behalf of a visually hidden control inside it, e.g.
+  `has-focus-visible:focus-outline` on the label wrapping a radio.
+*/
+@utility focus-outline {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: var(--focus-offset);
+}

@@ -237,6 +237,13 @@ export const rail = {
   mobileTotalHeight: `${railMobileStripRem + railMobileIndexRem}rem`,
 } as const
 
+/**
+ * Minimum size of anything tapped: filter options, buttons. 44px, the WCAG
+ * 2.5.5 target, which matters more than usual for a site read on a phone in
+ * a site office.
+ */
+export const tapTarget = '2.75rem'
+
 export const breakpoint = {
   sm: '40rem',
   md: '48rem',
