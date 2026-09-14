@@ -8,10 +8,13 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Run the gates by hand, or, with update_snapshots, regenerate the Linux
+  # visual baselines and commit them to the branch the run was started on:
+  #   gh workflow run quality.yml --ref <branch> -f update_snapshots=true
   workflow_dispatch:
     inputs:
       update_snapshots:
-        description: "Regenerate the Linux visual baselines and upload them as an artifact"
+        description: "Regenerate the Linux visual baselines and commit them to this branch"
         type: boolean
         default: false
 
@@ -26,6 +29,7 @@ env:
 jobs:
   build:
     name: Build, lint, types, content
+    if: ${{ !inputs.update_snapshots }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +48,7 @@ jobs:
 
   e2e:
     name: Playwright (axe, keyboard, contrast, forms, documents, visual)
+    if: ${{ !inputs.update_snapshots }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -57,23 +62,9 @@ jobs:
       - run: pnpm exec playwright install --with-deps chromium
 
       - name: Run the suite
-        if: ${{ !inputs.update_snapshots }}
         run: pnpm test:e2e
         env:
           CI: true
-
-      - name: Regenerate Linux visual baselines
-        if: ${{ inputs.update_snapshots }}
-        run: pnpm exec playwright test visual.spec.ts --update-snapshots
-        env:
-          CI: true
-
-      - name: Upload Linux baselines
-        if: ${{ inputs.update_snapshots }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: visual-baselines-linux
-          path: tests/e2e/__snapshots__/**/*-linux.png
 
       - name: Upload report
         if: ${{ failure() }}
@@ -85,8 +76,60 @@ jobs:
             test-results
           retention-days: 14
 
+  # Baselines are per platform: font rasterising on this runner differs from
+  # a Windows or macOS machine, so Linux baselines can only be made here.
+  update-snapshots:
+    name: Regenerate Linux visual baselines
+    if: ${{ inputs.update_snapshots }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+
+      - name: Regenerate
+        run: pnpm exec playwright test visual.spec.ts --update-snapshots
+        env:
+          CI: true
+
+      # Proves the new set is stable before it is committed: a snapshot that
+      # differs from itself on a second run would fail every later build.
+      - name: Check the new baselines pass
+        run: pnpm exec playwright test visual.spec.ts
+        env:
+          CI: true
+
+      - name: Upload for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines-linux
+          path: tests/e2e/__snapshots__/**/*-linux.png
+
+      # Commits made with GITHUB_TOKEN do not start another workflow run, so
+      # run the gates by hand afterwards: gh workflow run quality.yml --ref <branch>
+      - name: Commit to ${{ github.ref_name }}
+        run: |
+          git add tests/e2e/__snapshots__
+          if git diff --cached --quiet; then
+            echo "Linux baselines unchanged, nothing to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update Linux visual regression baselines"
+          git push
+
   performance:
     name: Performance budget
+    if: ${{ !inputs.update_snapshots }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
