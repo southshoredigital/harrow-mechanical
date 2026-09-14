@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { usePathname } from "next/navigation"
-import Lenis from "lenis"
+import type Lenis from "lenis"
 import "lenis/dist/lenis.css"
 
 import { motion } from "@/design/tokens"
@@ -21,6 +21,11 @@ import { publishLenis } from "./lenis-store"
  * layout, so anything it imports ships on every page; GSAP and ScrollTrigger
  * are 45KB gzipped and only the capabilities page animates with them.
  *
+ * Lenis itself is loaded after hydration rather than bundled, so it is never
+ * part of what a page downloads and evaluates before its first paint. Until
+ * it arrives the page scrolls natively, which is also the reduced motion
+ * behaviour, so nothing depends on it being there at load.
+ *
  * Under prefers-reduced-motion Lenis is not started at all: native scroll,
  * and ScrollTrigger falls back to its own listener. The preference is watched,
  * so changing it mid session takes effect without a reload.
@@ -33,11 +38,19 @@ export function SmoothScroll() {
   useEffect(() => {
     const query = window.matchMedia("(prefers-reduced-motion: reduce)")
     let lenis: Lenis | null = null
+    let loading = false
+    let disposed = false
 
-    const start = () => {
-      if (lenis) return
+    const start = async () => {
+      if (lenis || loading) return
 
-      lenis = new Lenis({
+      loading = true
+      const { default: LenisClass } = await import("lenis")
+      loading = false
+      // The preference may have changed, or the page unmounted, while it loaded.
+      if (disposed || query.matches || lenis) return
+
+      lenis = new LenisClass({
         lerp: motion.scroll.lerp,
         // Lenis runs the one loop on the page.
         autoRaf: true,
@@ -60,13 +73,14 @@ export function SmoothScroll() {
 
     const sync = () => {
       if (query.matches) stop()
-      else start()
+      else void start()
     }
 
     sync()
     query.addEventListener("change", sync)
 
     return () => {
+      disposed = true
       query.removeEventListener("change", sync)
       stop()
     }

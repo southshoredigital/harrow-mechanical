@@ -18,12 +18,17 @@ const SIGNAL = "rgb(226, 82, 27)"
 /** The schematic, not the capability icons, which are also role=img. */
 const FIGURE = 'svg[role="img"]:has([data-branch])'
 
+/**
+ * Lines not yet drawn: held invisible while GSAP loads, or hidden behind their
+ * dash once it has. Either way the reader sees nothing of them.
+ */
 async function hiddenPathCount(page: Page) {
   return page.locator('svg[role="img"] [data-branch] [data-part] path').evaluateAll(
     (paths) =>
       paths.filter((path) => {
         const style = getComputedStyle(path)
-        return style.strokeDasharray !== "none" && parseFloat(style.strokeDashoffset) > 1
+        const dashed = style.strokeDasharray !== "none" && parseFloat(style.strokeDashoffset) > 1
+        return style.visibility === "hidden" || dashed
       }).length
   )
 }
@@ -152,7 +157,10 @@ test.describe("below lg: drawing first, then the text", () => {
       .locator(FIGURE)
       .evaluate((svg) => svg.parentElement!.getBoundingClientRect().top + scrollY)
 
-    // Jump straight past the whole plot, as a hard fling would.
+    // Bring the figure just into view so GSAP loads and the plot is armed,
+    // then jump straight past the whole plot, as a hard fling would.
+    await page.evaluate((y) => window.scrollTo(0, y), figureTop - 844 + 10)
+    await page.waitForTimeout(SETTLED)
     await page.evaluate((y) => window.scrollTo(0, y), figureTop)
     const justAfter = await page.evaluate(
       () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))

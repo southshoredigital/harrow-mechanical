@@ -1,15 +1,10 @@
 "use client"
 
-import { useId, useRef, useState } from "react"
-import gsap from "gsap"
-import { ScrollTrigger } from "gsap/ScrollTrigger"
-import { useGSAP } from "@gsap/react"
+import { useEffect, useId, useRef, useState } from "react"
 
 import { subscribeLenis } from "@/components/providers/lenis-store"
 import { Figures } from "@/components/typography/Figures"
 import { breakpoint, motion, schematic } from "@/design/tokens"
-
-gsap.registerPlugin(ScrollTrigger)
 
 /* -------------------------------------------------------------------------
  * Drawing geometry
@@ -275,8 +270,14 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
   const figureRef = useRef<HTMLDivElement>(null)
   const uid = useId().replace(/:/g, "")
 
-  /** Null when no branch is live: below lg, before and after the plot. */
-  const [active, setActive] = useState<RiserBranchKey | null>(BRANCH_ORDER[0])
+  /**
+   * Null when no branch is live. Starts null at every size: the server
+   * rendered drawing is a finished monochrome drawing, and GSAP, which loads
+   * only as the figure comes into view, sets the live branch from lg once it
+   * is there. Below lg, where the figure starts off screen, no branch is ever
+   * marked before the plot reaches it.
+   */
+  const [active, setActive] = useState<RiserBranchKey | null>(null)
   const [landed, setLanded] = useState<LandedState>(ALL_LANDED)
 
   /**
@@ -291,253 +292,317 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
    */
   const [skipInitialTransition, setSkipInitialTransition] = useState(true)
 
-  useGSAP(
-    () => {
-      const root = rootRef.current
-      if (!root) return
+  /**
+   * GSAP and ScrollTrigger, 47KB gzipped with their evaluation, load only when
+   * the figure reaches the viewport. On a phone that is never during the
+   * initial load, so none of it competes with the first paint; on a desktop
+   * the figure is usually in view at once and it loads straight after
+   * hydration, as it did when it was bundled.
+   */
+  useEffect(() => {
+    const root = rootRef.current
+    const figure = figureRef.current
+    if (!root || !figure) return
 
-      // One scroll position: when Lenis is running, every scroll it applies
-      // is forwarded to ScrollTrigger in the same frame. The wiring lives
-      // here rather than in SmoothScroll so GSAP only loads on this route.
-      let offLenisScroll: (() => void) | null = null
-      let subscribed = false
-      const unsubscribeLenis = subscribeLenis((lenis) => {
-        offLenisScroll?.()
-        offLenisScroll = lenis ? lenis.on("scroll", ScrollTrigger.update) : null
-        // Lenis starting or stopping mid session changes who moves the page,
-        // so positions are measured again. Not on the first call: nothing
-        // has been created to measure yet.
-        if (subscribed) ScrollTrigger.refresh()
-        subscribed = true
+    let cancelled = false
+    let revert: (() => void) | null = null
+
+    /**
+     * Where motion is allowed, the branches are held invisible from hydration
+     * until GSAP has loaded and hidden the lines it is about to plot, so a
+     * drawing that has not started plotting never shows complete and then
+     * disappears. Not under reduced motion, where the complete drawing is the
+     * design, and always released, so if GSAP fails to load the fallback is
+     * the finished drawing rather than an empty frame. Set on the DOM rather
+     * than through state: it is held only while an external script loads,
+     * and React never manages this property.
+     */
+    const branchGroups = Array.from(root.querySelectorAll<SVGGElement>("[data-branch]"))
+    const holdLines = (hold: boolean) =>
+      branchGroups.forEach((group) => {
+        group.style.visibility = hold ? "hidden" : ""
       })
+    if (window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      holdLines(true)
+    }
 
-      const paths = (branch: RiserBranchKey, part: string) =>
-        gsap.utils.toArray<SVGPathElement>(
-          `[data-branch="${branch}"] [data-part="${part}"] path`,
-          root,
-        )
+    const load = async () => {
+      try {
+        const [{ default: gsap }, { ScrollTrigger }] = await Promise.all([
+          import("gsap"),
+          import("gsap/ScrollTrigger"),
+        ])
+        if (cancelled) return
+        gsap.registerPlugin(ScrollTrigger)
 
-      const mm = gsap.matchMedia()
+        // A context scoped to the root, so every tween, trigger and inline
+        // style it creates is reverted together when the component unmounts.
+        const ctx = gsap.context(() => {
+            // One scroll position: when Lenis is running, every scroll it applies
+            // is forwarded to ScrollTrigger in the same frame. The wiring lives
+            // here rather than in SmoothScroll so GSAP only loads on this route.
+            let offLenisScroll: (() => void) | null = null
+            let subscribed = false
+            const unsubscribeLenis = subscribeLenis((lenis) => {
+              offLenisScroll?.()
+              offLenisScroll = lenis ? lenis.on("scroll", ScrollTrigger.update) : null
+              // Lenis starting or stopping mid session changes who moves the page,
+              // so positions are measured again. Not on the first call: nothing
+              // has been created to measure yet.
+              if (subscribed) ScrollTrigger.refresh()
+              subscribed = true
+            })
 
-      // Re-runs whenever a condition changes: crossing lg rebuilds the
-      // behaviour for that layout, after the previous one has been reverted.
-      // GSAP only calls this when at least one condition matches, so `always`
-      // is there for a phone with reduced motion, where neither of the others
-      // does and the initial active branch would otherwise never be cleared.
-      mm.add(
-        {
-          always: "all",
-          wide: `(min-width: ${breakpoint.lg})`,
-          allowMotion: "(prefers-reduced-motion: no-preference)",
-        },
-        (context) => {
-          const { wide, allowMotion } = context.conditions as {
-            wide: boolean
-            allowMotion: boolean
-          }
-
-          // Which branch is live, from lg where text and figure share the
-          // screen. Not motion, so it runs at every preference.
-          const activeTriggers = wide
-            ? BRANCH_ORDER.map((key, index) =>
-                ScrollTrigger.create({
-                  trigger: sectionRefs.current[index] ?? undefined,
-                  start: "top center",
-                  end: "bottom center",
-                  onToggle: (self) => {
-                    if (self.isActive) setActive(key)
-                  },
-                }),
+            const paths = (branch: RiserBranchKey, part: string) =>
+              gsap.utils.toArray<SVGPathElement>(
+                `[data-branch="${branch}"] [data-part="${part}"] path`,
+                root,
               )
-            : []
-          setActive(wide ? BRANCH_ORDER[0] : null)
 
-          const killActive = () => activeTriggers.forEach((trigger) => trigger.kill())
-          if (!allowMotion) return killActive
+            const mm = gsap.matchMedia()
 
-          // Hide every line behind the gap of a single dash longer than the
-          // path itself. Butt caps, so nothing pokes out at zero progress.
-          const hiddenLength = (_i: number, el: SVGPathElement) =>
-            Math.ceil(screenLength(el)) + DASH_OVERRUN
-          const hideEls = (els: SVGPathElement[]) =>
-            gsap.set(els, { strokeDasharray: hiddenLength, strokeDashoffset: hiddenLength })
-
-          /**
-           * One continuous timeline for all three branches, played
-           * sequentially and driven by a single ScrollTrigger, rather than
-           * one scrub trigger per branch against the viewport.
-           *
-           * From lg it scrubs against `sequenceRef`, and each branch's share
-           * of the timeline is its section's share of the sequence height, so
-           * a branch plots while its own text is passing. Sections are sized
-           * by their content with fixed spacing between them, so the shares
-           * differ and are measured, not assumed equal.
-           *
-           * Below lg it scrubs against the figure's own passage into view and
-           * the branches take equal shares: there is no text beside the
-           * drawing to keep in step with.
-           */
-          const master = gsap.timeline({ paused: true, defaults: { ease: "none" } })
-          const allPathsByBranch: Record<RiserBranchKey, SVGPathElement[]> = {
-            mechanical: [],
-            hydraulic: [],
-            controls: [],
-          }
-          const branchEnd: Record<RiserBranchKey, number> = {
-            mechanical: 0,
-            hydraulic: 0,
-            controls: 0,
-          }
-          const branchTimelines: gsap.core.Timeline[] = []
-
-          /**
-           * Lays the branch timelines end to end, each stretched to its share.
-           * Runs again on every refresh, since a resize rewraps the scope
-           * lists and changes the section heights.
-           */
-          const layoutBranches = () => {
-            let start = 0
-            BRANCH_ORDER.forEach((key, index) => {
-              const share = wide
-                ? Math.max(1, sectionRefs.current[index]?.offsetHeight ?? 1)
-                : 1
-              const tl = branchTimelines[index]
-              tl.startTime(start)
-              tl.duration(share)
-              start += share
-              branchEnd[key] = start
-            })
-          }
-
-          BRANCH_ORDER.forEach((key) => {
-            const plant = paths(key, "plant")
-            const risers = paths(key, "risers")
-            const takeoffs = LEVELS.map((_, level) =>
-              paths(key, `takeoff-${level}`),
-            )
-            const all = [...plant, ...risers, ...takeoffs.flat()]
-            allPathsByBranch[key] = all
-            hideEls(all)
-
-            // Not paused: it is nested inside the paused `master` timeline, and
-            // a paused nested timeline does not contribute its duration to the
-            // parent's, which left `master.duration()` at zero.
-            const tl = gsap.timeline({
-              defaults: { ease: "none", strokeDashoffset: 0 },
-            })
-
-            tl.to(plant, { duration: PLANT_UNITS, stagger: PLANT_STAGGER }, 0)
-            tl.to(risers, { duration: RISER_UNITS }, PLANT_UNITS)
-
-            takeoffs.forEach((els, level) => {
-              tl.to(
-                els,
-                { duration: TAKEOFF_UNITS, stagger: TAKEOFF_STAGGER },
-                PLANT_UNITS + RISER_UNITS * riserFraction(LEVELS[level].cy),
-              )
-            })
-
-            master.add(tl)
-            branchTimelines.push(tl)
-          })
-          layoutBranches()
-
-          const hasLanded = { ...NONE_LANDED }
-          let drawing: RiserBranchKey | null = null
-          let initialSynced = false
-
-          const sync = () => {
-            const time = master.time()
-            const next: LandedState = {
-              mechanical: time >= branchEnd.mechanical,
-              hydraulic: time >= branchEnd.hydraulic,
-              controls: time >= branchEnd.controls,
-            }
-
-            // Below lg the live branch is the one being drawn, and none before
-            // the plot starts or once the drawing is finished.
-            if (!wide) {
-              const now = time > 0 ? (BRANCH_ORDER.find((key) => !next[key]) ?? null) : null
-              if (now !== drawing) {
-                drawing = now
-                setActive(now)
-              }
-            }
-
-            const changed = BRANCH_ORDER.some((key) => next[key] !== hasLanded[key])
-            if (!changed && initialSynced) return
-
-            Object.assign(hasLanded, next)
-            const first = !initialSynced
-            initialSynced = true
-            setLanded(next)
-
-            // Let the corrected, untransitioned frame paint before allowing
-            // the CSS transition to apply to any later, genuinely scrolled change.
-            if (first) requestAnimationFrame(() => setSkipInitialTransition(false))
-          }
-
-          const scrubTrigger = ScrollTrigger.create({
-            ...(wide
-              ? {
-                  trigger: sequenceRef.current,
-                  // The pinned figure sits below the fixed concept bar, so the
-                  // sequence starts when it reaches the bar, not the viewport top.
-                  start: () => `top ${conceptBarPx()}px`,
-                  end: "bottom bottom",
+            // Re-runs whenever a condition changes: crossing lg rebuilds the
+            // behaviour for that layout, after the previous one has been reverted.
+            // GSAP only calls this when at least one condition matches, so `always`
+            // is there for a phone with reduced motion, where neither of the others
+            // does and the initial active branch would otherwise never be cleared.
+            mm.add(
+              {
+                always: "all",
+                wide: `(min-width: ${breakpoint.lg})`,
+                allowMotion: "(prefers-reduced-motion: no-preference)",
+              },
+              (context) => {
+                const { wide, allowMotion } = context.conditions as {
+                  wide: boolean
+                  allowMotion: boolean
                 }
-              : {
-                  // From the figure's top entering the viewport to its bottom
-                  // arriving there: the drawing completes as it comes fully
-                  // into view.
-                  trigger: figureRef.current,
-                  start: "top bottom",
-                  end: "bottom bottom",
-                }),
-            // From lg the drawing tracks the scroll exactly. Below lg it eases
-            // towards it, so a fling on a phone draws rather than jumps.
-            scrub: wide ? true : schematic.catchUpNarrow / 1000,
-            animation: master,
-            onRefresh: sync,
-            // A resize rescales the drawing, so the dash lengths have to be
-            // measured again before the timeline re-reads its start values.
-            onRefreshInit: () => {
-              BRANCH_ORDER.forEach((key) => hideEls(allPathsByBranch[key]))
-              layoutBranches()
-              master.invalidate()
-            },
-          })
 
-          // Landing and the live branch follow the drawing itself, not the
-          // scroll: with the eased scrub below lg the timeline is still moving
-          // after the last scroll update, and a label must land when its line
-          // does, not when the finger stopped.
-          master.eventCallback("onUpdate", sync)
+                // Which branch is live, from lg where text and figure share the
+                // screen. Not motion, so it runs at every preference.
+                const activeTriggers = wide
+                  ? BRANCH_ORDER.map((key, index) =>
+                      ScrollTrigger.create({
+                        trigger: sectionRefs.current[index] ?? undefined,
+                        start: "top center",
+                        end: "bottom center",
+                        onToggle: (self) => {
+                          if (self.isActive) setActive(key)
+                        },
+                      }),
+                    )
+                  : []
+                setActive(wide ? BRANCH_ORDER[0] : null)
 
-          // ScrollTrigger.create seeds the animation from the current scroll
-          // position synchronously, so this reflects real progress immediately,
-          // including on a reload part way down the page.
-          sync()
+                const killActive = () => activeTriggers.forEach((trigger) => trigger.kill())
+                if (!allowMotion) return killActive
 
-          // Reverting to the reduced preference, or across lg, must leave the
-          // drawing whole.
-          return () => {
-            setLanded(ALL_LANDED)
-            setSkipInitialTransition(true)
-            scrubTrigger.kill()
-            killActive()
-          }
-        },
-      )
+                // Hide every line behind the gap of a single dash longer than the
+                // path itself. Butt caps, so nothing pokes out at zero progress.
+                const hiddenLength = (_i: number, el: SVGPathElement) =>
+                  Math.ceil(screenLength(el)) + DASH_OVERRUN
+                const hideEls = (els: SVGPathElement[]) =>
+                  gsap.set(els, { strokeDasharray: hiddenLength, strokeDashoffset: hiddenLength })
 
-      return () => {
-        unsubscribeLenis()
-        offLenisScroll?.()
-        mm.revert()
+                /**
+                 * One continuous timeline for all three branches, played
+                 * sequentially and driven by a single ScrollTrigger, rather than
+                 * one scrub trigger per branch against the viewport.
+                 *
+                 * From lg it scrubs against `sequenceRef`, and each branch's share
+                 * of the timeline is its section's share of the sequence height, so
+                 * a branch plots while its own text is passing. Sections are sized
+                 * by their content with fixed spacing between them, so the shares
+                 * differ and are measured, not assumed equal.
+                 *
+                 * Below lg it scrubs against the figure's own passage into view and
+                 * the branches take equal shares: there is no text beside the
+                 * drawing to keep in step with.
+                 */
+                const master = gsap.timeline({ paused: true, defaults: { ease: "none" } })
+                const allPathsByBranch: Record<RiserBranchKey, SVGPathElement[]> = {
+                  mechanical: [],
+                  hydraulic: [],
+                  controls: [],
+                }
+                const branchEnd: Record<RiserBranchKey, number> = {
+                  mechanical: 0,
+                  hydraulic: 0,
+                  controls: 0,
+                }
+                const branchTimelines: gsap.core.Timeline[] = []
+
+                /**
+                 * Lays the branch timelines end to end, each stretched to its share.
+                 * Runs again on every refresh, since a resize rewraps the scope
+                 * lists and changes the section heights.
+                 */
+                const layoutBranches = () => {
+                  let start = 0
+                  BRANCH_ORDER.forEach((key, index) => {
+                    const share = wide
+                      ? Math.max(1, sectionRefs.current[index]?.offsetHeight ?? 1)
+                      : 1
+                    const tl = branchTimelines[index]
+                    tl.startTime(start)
+                    tl.duration(share)
+                    start += share
+                    branchEnd[key] = start
+                  })
+                }
+
+                BRANCH_ORDER.forEach((key) => {
+                  const plant = paths(key, "plant")
+                  const risers = paths(key, "risers")
+                  const takeoffs = LEVELS.map((_, level) =>
+                    paths(key, `takeoff-${level}`),
+                  )
+                  const all = [...plant, ...risers, ...takeoffs.flat()]
+                  allPathsByBranch[key] = all
+                  hideEls(all)
+
+                  // Not paused: it is nested inside the paused `master` timeline, and
+                  // a paused nested timeline does not contribute its duration to the
+                  // parent's, which left `master.duration()` at zero.
+                  const tl = gsap.timeline({
+                    defaults: { ease: "none", strokeDashoffset: 0 },
+                  })
+
+                  tl.to(plant, { duration: PLANT_UNITS, stagger: PLANT_STAGGER }, 0)
+                  tl.to(risers, { duration: RISER_UNITS }, PLANT_UNITS)
+
+                  takeoffs.forEach((els, level) => {
+                    tl.to(
+                      els,
+                      { duration: TAKEOFF_UNITS, stagger: TAKEOFF_STAGGER },
+                      PLANT_UNITS + RISER_UNITS * riserFraction(LEVELS[level].cy),
+                    )
+                  })
+
+                  master.add(tl)
+                  branchTimelines.push(tl)
+                })
+                layoutBranches()
+
+                const hasLanded = { ...NONE_LANDED }
+                let drawing: RiserBranchKey | null = null
+                let initialSynced = false
+
+                const sync = () => {
+                  const time = master.time()
+                  const next: LandedState = {
+                    mechanical: time >= branchEnd.mechanical,
+                    hydraulic: time >= branchEnd.hydraulic,
+                    controls: time >= branchEnd.controls,
+                  }
+
+                  // Below lg the live branch is the one being drawn, and none before
+                  // the plot starts or once the drawing is finished.
+                  if (!wide) {
+                    const now = time > 0 ? (BRANCH_ORDER.find((key) => !next[key]) ?? null) : null
+                    if (now !== drawing) {
+                      drawing = now
+                      setActive(now)
+                    }
+                  }
+
+                  const changed = BRANCH_ORDER.some((key) => next[key] !== hasLanded[key])
+                  if (!changed && initialSynced) return
+
+                  Object.assign(hasLanded, next)
+                  const first = !initialSynced
+                  initialSynced = true
+                  setLanded(next)
+
+                  // Let the corrected, untransitioned frame paint before allowing
+                  // the CSS transition to apply to any later, genuinely scrolled change.
+                  if (first) requestAnimationFrame(() => setSkipInitialTransition(false))
+                }
+
+                const scrubTrigger = ScrollTrigger.create({
+                  ...(wide
+                    ? {
+                        trigger: sequenceRef.current,
+                        // The pinned figure sits below the fixed concept bar, so the
+                        // sequence starts when it reaches the bar, not the viewport top.
+                        start: () => `top ${conceptBarPx()}px`,
+                        end: "bottom bottom",
+                      }
+                    : {
+                        // From the figure's top entering the viewport to its bottom
+                        // arriving there: the drawing completes as it comes fully
+                        // into view.
+                        trigger: figureRef.current,
+                        start: "top bottom",
+                        end: "bottom bottom",
+                      }),
+                  // From lg the drawing tracks the scroll exactly. Below lg it eases
+                  // towards it, so a fling on a phone draws rather than jumps.
+                  scrub: wide ? true : schematic.catchUpNarrow / 1000,
+                  animation: master,
+                  onRefresh: sync,
+                  // A resize rescales the drawing, so the dash lengths have to be
+                  // measured again before the timeline re-reads its start values.
+                  onRefreshInit: () => {
+                    BRANCH_ORDER.forEach((key) => hideEls(allPathsByBranch[key]))
+                    layoutBranches()
+                    master.invalidate()
+                  },
+                })
+
+                // Landing and the live branch follow the drawing itself, not the
+                // scroll: with the eased scrub below lg the timeline is still moving
+                // after the last scroll update, and a label must land when its line
+                // does, not when the finger stopped.
+                master.eventCallback("onUpdate", sync)
+
+                // ScrollTrigger.create seeds the animation from the current scroll
+                // position synchronously, so this reflects real progress immediately,
+                // including on a reload part way down the page.
+                sync()
+
+                // Reverting to the reduced preference, or across lg, must leave the
+                // drawing whole.
+                return () => {
+                  setLanded(ALL_LANDED)
+                  setSkipInitialTransition(true)
+                  scrubTrigger.kill()
+                  killActive()
+                }
+              },
+            )
+
+            return () => {
+              unsubscribeLenis()
+              offLenisScroll?.()
+              mm.revert()
+            }
+        }, root)
+        revert = () => ctx.revert()
+      } catch {
+        // Offline or blocked: the complete drawing is the fallback.
+      } finally {
+        if (!cancelled) holdLines(false)
       }
-    },
-    { scope: rootRef },
-  )
+    }
+
+    // No margin: on a phone the plot starts as the figure's top enters the
+    // viewport, which is exactly when this fires, and the eased scrub below
+    // lg catches the drawing up once GSAP arrives.
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return
+      observer.disconnect()
+      void load()
+    })
+    observer.observe(figure)
+
+    return () => {
+      cancelled = true
+      observer.disconnect()
+      revert?.()
+      holdLines(false)
+    }
+  }, [])
 
   const titleId = `${uid}-title`
   const descId = `${uid}-desc`
