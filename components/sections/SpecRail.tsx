@@ -17,6 +17,12 @@ export type RailDatum = {
   value: string
 }
 
+/** A secondary, page scoped index. The capability system list on /capabilities. */
+export type RailSubIndex = {
+  heading: string
+  items: readonly RailSection[]
+}
+
 export type SpecRailProps = {
   /** Title block masthead. Links home. */
   identifier: string
@@ -24,10 +30,16 @@ export type SpecRailProps = {
   sections: readonly RailSection[]
   /**
    * Page contextual data. Contract value, duration, sector, systems on a
-   * project; the system index on capabilities. Omitted where there is no
-   * context to carry rather than filled with something invented.
+   * project. Omitted where there is no context to carry rather than filled
+   * with something invented.
    */
   data?: readonly RailDatum[]
+  /**
+   * A second, page scoped index below the main one: the five systems on
+   * /capabilities, active one in `color.signal` via the same aria-current
+   * styling RailIndex already applies.
+   */
+  index?: RailSubIndex
 }
 
 /**
@@ -39,7 +51,7 @@ export type SpecRailProps = {
  *
  * Pure presentation: it takes all of its content as props and never fetches.
  */
-export function SpecRail({ identifier, sections, data }: SpecRailProps) {
+export function SpecRail({ identifier, sections, data, index }: SpecRailProps) {
   return (
     <>
       {/*
@@ -83,6 +95,18 @@ export function SpecRail({ identifier, sections, data }: SpecRailProps) {
         >
           <RailIndex sections={sections} />
         </nav>
+
+        {index ? (
+          <nav
+            aria-label={index.heading}
+            className="mt-8 border-t border-border-hairline pt-4"
+          >
+            <p className="text-text-secondary">{index.heading}</p>
+            <div className="mt-3">
+              <RailIndex sections={index.items} />
+            </div>
+          </nav>
+        ) : null}
 
         {data && data.length > 0 ? (
           <dl className="mt-8 border-t border-border-hairline pt-4">

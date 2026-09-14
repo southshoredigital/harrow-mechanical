@@ -78,11 +78,13 @@ export type Capability = {
   relatedProjects: string[]
 }
 
-export type DocumentCategory =
-  | 'Insurance'
-  | 'Licence'
-  | 'Certification'
-  | 'Safety'
+export const DOCUMENT_CATEGORIES = [
+  'Insurance',
+  'Licence',
+  'Certification',
+  'Safety',
+] as const
+export type DocumentCategory = (typeof DOCUMENT_CATEGORIES)[number]
 
 export type ComplianceDocument = {
   title: string
@@ -115,6 +117,23 @@ export type Accreditation = {
   reference: string
   /** ISO date. */
   currentTo: string
+}
+
+export type SafetyStatistics = {
+  /** ISO dates. The reporting period the rates below are measured against. */
+  periodStart: string
+  periodEnd: string
+  hoursWorked: number
+  /** Lost time injury frequency rate, per million hours worked. */
+  ltifr: number
+  /** Total recordable injury frequency rate, per million hours worked. */
+  trifr: number
+  lostTimeInjuries: number
+  daysLost: number
+  recordableInjuries: number
+  notifiableIncidents: number
+  /** ISO date. When these figures were last checked against the register. */
+  lastReviewed: string
 }
 
 /** Derives the scale band from a contract value. */

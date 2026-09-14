@@ -240,10 +240,33 @@ const NONE_LANDED: LandedState = {
 export function RiserSchematic({ title, branches }: RiserSchematicProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const sectionRefs = useRef<(HTMLElement | null)[]>([])
+  /**
+   * Wraps only the stacked branch sections and the pinned figure, not the
+   * heading above them. The whole scroll sequence is scrubbed against this
+   * element's own top and bottom, so it starts and ends at the same points
+   * regardless of how much content sits above it on the page: at the top of
+   * the document there is no scroll position at which this element's top can
+   * already have passed the top of the viewport, so the sequence can never
+   * be pre-elapsed the way it was when each branch scrubbed against its own
+   * "top bottom" to "top 20%" window against the viewport instead.
+   */
+  const sequenceRef = useRef<HTMLDivElement>(null)
   const uid = useId().replace(/:/g, "")
 
   const [active, setActive] = useState<RiserBranchKey>(BRANCH_ORDER[0])
   const [landed, setLanded] = useState<LandedState>(ALL_LANDED)
+
+  /**
+   * True until the first real sync against scroll position. The label wipe
+   * runs on a CSS transition so `schematic.labelDelay` reads as a pause
+   * after motion rather than a scroll-scrubbed value, but that same
+   * transition must not fire for the very first correction from the
+   * optimistic `ALL_LANDED` default down to whatever is actually true at
+   * the current scroll position, or the labels visibly wipe out on load.
+   * State, not a ref: the value has to affect this render's styles, and a
+   * ref read during render is exactly what React warns against.
+   */
+  const [skipInitialTransition, setSkipInitialTransition] = useState(true)
 
   useGSAP(
     () => {
@@ -271,31 +294,47 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
       const mm = gsap.matchMedia()
 
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        setLanded(NONE_LANDED)
+        // Hide every line behind the gap of a single dash longer than the
+        // path itself. Butt caps, so nothing pokes out at zero progress.
+        const hiddenLength = (_i: number, el: SVGPathElement) =>
+          Math.ceil(screenLength(el)) + DASH_OVERRUN
+        const hideEls = (els: SVGPathElement[]) =>
+          gsap.set(els, { strokeDasharray: hiddenLength, strokeDashoffset: hiddenLength })
 
-        BRANCH_ORDER.forEach((key, index) => {
+        /**
+         * One continuous timeline for all three branches, played sequentially
+         * so each occupies an equal third of the total scroll distance. A
+         * single ScrollTrigger drives all of it against `sequenceRef`, rather
+         * than one scrub trigger per branch against the viewport: that is
+         * what makes the sequence start and end at the sequence's own edges
+         * instead of at points that depend on how tall the page is above it.
+         */
+        const master = gsap.timeline({ paused: true, defaults: { ease: "none" } })
+        const allPathsByBranch: Record<RiserBranchKey, SVGPathElement[]> = {
+          mechanical: [],
+          hydraulic: [],
+          controls: [],
+        }
+        const branchEnd: Record<RiserBranchKey, number> = {
+          mechanical: 0,
+          hydraulic: 0,
+          controls: 0,
+        }
+
+        BRANCH_ORDER.forEach((key) => {
           const plant = paths(key, "plant")
           const risers = paths(key, "risers")
           const takeoffs = LEVELS.map((_, level) =>
             paths(key, `takeoff-${level}`),
           )
           const all = [...plant, ...risers, ...takeoffs.flat()]
+          allPathsByBranch[key] = all
+          hideEls(all)
 
-          // Hide every line behind the gap of a single dash longer than the
-          // path itself. Butt caps, so nothing pokes out at zero progress.
-          const hidden = (_i: number, el: SVGPathElement) =>
-            Math.ceil(screenLength(el)) + DASH_OVERRUN
-
-          const hide = () =>
-            gsap.set(all, {
-              strokeDasharray: hidden,
-              strokeDashoffset: hidden,
-            })
-
-          hide()
-
+          // Not paused: it is nested inside the paused `master` timeline, and
+          // a paused nested timeline does not contribute its duration to the
+          // parent's, which left `master.duration()` at zero.
           const tl = gsap.timeline({
-            paused: true,
             defaults: { ease: "none", strokeDashoffset: 0 },
           })
 
@@ -310,35 +349,61 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
             )
           })
 
-          // The branch completes as its section comes to rest in the
-          // viewport, leaving the remaining scroll for reading it.
-          let hasLanded = false
-          const syncLabel = (self: ScrollTrigger) => {
-            const next = self.progress >= 1
-            if (next === hasLanded) return
-            hasLanded = next
-            setLanded((prev) => ({ ...prev, [key]: next }))
-          }
-
-          ScrollTrigger.create({
-            trigger: sectionRefs.current[index] ?? undefined,
-            start: "top bottom",
-            end: "top 20%",
-            scrub: true,
-            animation: tl,
-            onUpdate: syncLabel,
-            onRefresh: syncLabel,
-            // A resize rescales the drawing, so the dash lengths have to be
-            // measured again before the timeline re-reads its start values.
-            onRefreshInit: () => {
-              hide()
-              tl.invalidate()
-            },
-          })
+          master.add(tl)
+          branchEnd[key] = master.duration()
         })
 
+        const hasLanded = { ...NONE_LANDED }
+        let initialSynced = false
+
+        const sync = () => {
+          const time = master.time()
+          const next: LandedState = {
+            mechanical: time >= branchEnd.mechanical,
+            hydraulic: time >= branchEnd.hydraulic,
+            controls: time >= branchEnd.controls,
+          }
+
+          const changed = BRANCH_ORDER.some((key) => next[key] !== hasLanded[key])
+          if (!changed && initialSynced) return
+
+          Object.assign(hasLanded, next)
+          const first = !initialSynced
+          initialSynced = true
+          setLanded(next)
+
+          // Let the corrected, untransitioned frame paint before allowing
+          // the CSS transition to apply to any later, genuinely scrolled change.
+          if (first) requestAnimationFrame(() => setSkipInitialTransition(false))
+        }
+
+        const rootTrigger = ScrollTrigger.create({
+          trigger: sequenceRef.current,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: true,
+          animation: master,
+          onUpdate: sync,
+          onRefresh: sync,
+          // A resize rescales the drawing, so the dash lengths have to be
+          // measured again before the timeline re-reads its start values.
+          onRefreshInit: () => {
+            BRANCH_ORDER.forEach((key) => hideEls(allPathsByBranch[key]))
+            master.invalidate()
+          },
+        })
+
+        // ScrollTrigger.create seeds the animation from the current scroll
+        // position synchronously, so this reflects real progress immediately,
+        // including on a reload part way down the page.
+        sync()
+
         // Reverting to the reduced preference must leave the drawing whole.
-        return () => setLanded(ALL_LANDED)
+        return () => {
+          setLanded(ALL_LANDED)
+          setSkipInitialTransition(true)
+          rootTrigger.kill()
+        }
       })
 
       return () => {
@@ -366,7 +431,7 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
           {title}
         </h2>
 
-        <div className="xl:grid xl:grid-cols-[22rem_1fr] xl:gap-12">
+        <div ref={sequenceRef} className="xl:grid xl:grid-cols-[22rem_1fr] xl:gap-12">
           {/*
             Below xl the figure pins to the top and the text passes beneath
             it, so it carries the page background and a closing rule. At xl
@@ -428,9 +493,18 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
                         transformOrigin: "left center",
                         transform: landed[key] ? "scaleX(1)" : "scaleX(0)",
                         transitionProperty: "transform",
-                        transitionDuration: `${motion.duration.reveal}ms`,
+                        // The very first correction from the optimistic,
+                        // pre-hydration `landed` default to whatever is
+                        // actually true at the current scroll position must
+                        // be instant: only a genuine, later scroll-driven
+                        // change should carry the wipe and its delay.
+                        transitionDuration: skipInitialTransition
+                          ? "0ms"
+                          : `${motion.duration.reveal}ms`,
                         transitionTimingFunction: motion.ease.plotter,
-                        transitionDelay: `${schematic.labelDelay}ms`,
+                        transitionDelay: skipInitialTransition
+                          ? "0ms"
+                          : `${schematic.labelDelay}ms`,
                       }}
                     />
                   </clipPath>

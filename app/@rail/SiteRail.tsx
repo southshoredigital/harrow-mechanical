@@ -1,5 +1,5 @@
 import { SpecRail } from "@/components/sections/SpecRail"
-import type { RailDatum } from "@/components/sections/SpecRail"
+import type { RailDatum, RailSubIndex } from "@/components/sections/SpecRail"
 import { SITE_SECTIONS } from "@/content/sections"
 
 /**
@@ -11,8 +11,19 @@ import { SITE_SECTIONS } from "@/content/sections"
  * rail's data belongs to the page. A route that carries data adds its own page
  * inside @rail; everything else falls through to the catch-all.
  */
-export function SiteRail({ data }: { data?: readonly RailDatum[] }) {
+export function SiteRail({
+  data,
+  index,
+}: {
+  data?: readonly RailDatum[]
+  index?: RailSubIndex
+}) {
   return (
-    <SpecRail identifier="Harrow Mechanical" sections={SITE_SECTIONS} data={data} />
+    <SpecRail
+      identifier="Harrow Mechanical"
+      sections={SITE_SECTIONS}
+      data={data}
+      index={index}
+    />
   )
 }
