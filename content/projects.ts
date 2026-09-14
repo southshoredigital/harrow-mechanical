@@ -100,10 +100,10 @@ export const projects: Project[] = [
       'Cut over across three weekends in October and November 2021 with no room off heating for more than six hours. Site gas consumption metered at 31% below the previous year over the following winter on comparable degree days. Facility rolled onto a scheduled maintenance contract in December 2021.',
     images: [
       {
-        src: '/images/chiller-plant-room-02.jpg',
-        alt: 'Plant room viewed from floor level with condensing boilers and overhead pipework risers',
+        src: '/images/chiller-plant-room-01.jpg',
+        alt: 'Chiller and pump skid viewed from the plant room floor',
         width: 2400,
-        height: 3600,
+        height: 1600,
       },
       {
         src: '/images/ductwork-ceiling-void-02.jpg',
@@ -139,10 +139,10 @@ export const projects: Project[] = [
       'Sixteen months. All eighteen fume cupboards containment tested to AS/NZS 2243.8 with the building at design airflow, results issued to the university safety officer before occupancy. Building handed over on 12 January 2024 ahead of semester one.',
     images: [
       {
-        src: '/images/rooftop-plant-01.jpg',
-        alt: 'Roof mounted exhaust fans and discharge ductwork on a commercial roof',
+        src: '/images/rooftop-plant-03.jpg',
+        alt: 'Exhaust fans and discharge stacks on a commercial roof',
         width: 2400,
-        height: 1600,
+        height: 1459,
       },
       {
         src: '/images/switchboard-panel-01.jpg',
@@ -212,10 +212,10 @@ export const projects: Project[] = [
       'Integrated systems testing ran eleven days in February 2026 at 100% of design IT load on 4.5MW of load banks. All 42 failure scenarios were executed with no cold aisle exceeding 27°C. Commissioning records issued to AIRAH DA19 with the isolation schedule as a handover document.',
     images: [
       {
-        src: '/images/chiller-plant-room-01.jpg',
-        alt: 'Air cooled chillers and primary variable flow headers in a plant room',
+        src: '/images/rooftop-plant-05.jpg',
+        alt: 'Air cooled chiller units and pipework on a rooftop plant deck',
         width: 2400,
-        height: 1600,
+        height: 1800,
       },
       {
         src: '/images/switchboard-panel-02.jpg',
@@ -286,10 +286,10 @@ export const projects: Project[] = [
       'Twelve months with no production shift lost to the works. Glycol flow held at −4°C ±0.5°C across all fourteen users at full process load during witnessed testing. Cold store pull down from ambient to 2°C recorded at 26 hours.',
     images: [
       {
-        src: '/images/chiller-plant-room-02.jpg',
-        alt: 'Glycol chiller skid with buffer tanks and insulated flow and return headers',
+        src: '/images/chiller-plant-room-01.jpg',
+        alt: 'Packaged chiller skid and insulated pipework in an industrial plant room',
         width: 2400,
-        height: 3600,
+        height: 1600,
       },
       {
         src: '/images/ductwork-ceiling-void-04.jpg',
@@ -325,10 +325,10 @@ export const projects: Project[] = [
       'Boundary noise measured at 39 dB(A) at the nearest residential façade with the plant at full duty, verified by an independent acoustic consultant in March 2021. Capture velocities recorded at all six hoods and issued with the licence compliance report.',
     images: [
       {
-        src: '/images/ductwork-ceiling-void-05.jpg',
-        alt: 'Ductwork risers running vertically through a shaft to roof plant',
+        src: '/images/rooftop-plant-06.jpg',
+        alt: 'Acoustic enclosure and exhaust fan discharge on a commercial roof',
         width: 2400,
-        height: 3600,
+        height: 1563,
       },
     ],
     featured: true,
@@ -398,14 +398,14 @@ export const projects: Project[] = [
       'Nine months, one floor at a time. All 47 penetrations executed under the approved heritage permit with no amendment. Per floor energy metering handed over with the BMS, giving the owner separated data for the next NABERS rating year.',
     images: [
       {
-        src: '/images/chiller-plant-room-01.jpg',
-        alt: 'Sectional air handling unit installed in a narrow original plant room',
+        src: '/images/switchboard-panel-01.jpg',
+        alt: 'BMS control panel with labelled circuit breakers in a building services riser',
         width: 2400,
-        height: 1600,
+        height: 1346,
       },
       {
         src: '/images/ductwork-ceiling-void-05.jpg',
-        alt: 'Chilled water risers on freestanding frames running vertically through a light well',
+        alt: 'Pipework risers on freestanding frames running vertically through a services shaft',
         width: 2400,
         height: 3600,
       },
