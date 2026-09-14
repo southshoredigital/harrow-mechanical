@@ -1,5 +1,8 @@
 import Link from "next/link"
 
+import { LogoImage } from "@/components/typography/LogoImage"
+import type { LogoAsset } from "@/lib/brand"
+
 import { RailIndex, RailSheet, RailCurrent } from "./SpecRailIndex"
 
 /**
@@ -24,8 +27,10 @@ export type RailSubIndex = {
 }
 
 export type SpecRailProps = {
-  /** Title block masthead. Links home. */
+  /** The business name: the masthead logo's alt text. */
   identifier: string
+  /** Title block masthead, the full lockup. Links home. */
+  logo: LogoAsset
   /** Top level section index. Passed in, never fetched. */
   sections: readonly RailSection[]
   /**
@@ -51,7 +56,12 @@ export type SpecRailProps = {
  *
  * Pure presentation: it takes all of its content as props and never fetches.
  */
-export function SpecRail({ identifier, sections, data, index }: SpecRailProps) {
+/**
+ * Every link in the rail sets prefetch={false}. The rail is on screen on
+ * every page, so viewport prefetching would fetch all six sections' code at
+ * idle on every visit: 55KB on the homepage, on a phone on mobile data.
+ */
+export function SpecRail({ identifier, logo, sections, data, index }: SpecRailProps) {
   return (
     <>
       {/*
@@ -59,8 +69,12 @@ export function SpecRail({ identifier, sections, data, index }: SpecRailProps) {
         ever covers content: the identifier strip, then the section index.
       */}
       <div className="sticky top-0 z-40 flex h-[var(--rail-mobile-height)] items-center justify-between gap-4 border-b border-border-hairline bg-surface-page px-4 font-mono text-xs tracking-label uppercase lg:hidden">
-        <Link href="/" className="focus-ring text-text-primary">
-          {identifier}
+        <Link href="/" prefetch={false} className="focus-ring block">
+          <LogoImage
+            asset={logo}
+            alt={identifier}
+            className="block h-[var(--logo-rail-mobile)] w-auto"
+          />
         </Link>
         <RailCurrent sections={sections} />
       </div>
@@ -82,11 +96,12 @@ export function SpecRail({ identifier, sections, data, index }: SpecRailProps) {
         aria-label="Specification"
         className="fixed inset-y-0 left-0 z-40 hidden w-[var(--rail-width)] flex-col border-r border-border-hairline bg-surface-page px-4 py-6 font-mono text-xs tracking-label uppercase lg:flex"
       >
-        <Link
-          href="/"
-          className="focus-ring block text-text-primary"
-        >
-          {identifier}
+        <Link href="/" prefetch={false} className="focus-ring block self-start">
+          <LogoImage
+            asset={logo}
+            alt={identifier}
+            className="block h-[var(--logo-rail)] w-auto"
+          />
         </Link>
 
         <nav

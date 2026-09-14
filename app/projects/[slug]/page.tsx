@@ -7,6 +7,7 @@ import type { SpreadSection } from "@/components/sections/ProjectSpread"
 import { Figures } from "@/components/typography/Figures"
 import { projects } from "@/content/projects"
 import { getProject, projectFacts } from "@/lib/projects"
+import { JsonLd, breadcrumbList, projectMetadata } from "@/lib/seo"
 
 /**
  * Project detail. Reads as a job record, not a case study: the brief, the
@@ -26,12 +27,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const project = getProject((await params).slug)
-  if (!project) return {}
-
-  return {
-    title: `${project.title} | Harrow Mechanical`,
-    description: project.brief,
-  }
+  return project ? projectMetadata(project) : {}
 }
 
 export default async function ProjectPage({ params }: Props) {
@@ -77,6 +73,12 @@ export default async function ProjectPage({ params }: Props) {
 
   return (
     <article className="pb-[var(--spacing-section-generous)]">
+      <JsonLd
+        data={breadcrumbList([
+          { name: "Projects", path: "/projects" },
+          { name: project.title, path: `/projects/${project.slug}` },
+        ])}
+      />
       <header className="mx-auto w-full max-w-[var(--layout-max)] px-[var(--layout-gutter)] pt-16 lg:px-[var(--layout-gutter-wide)] lg:pt-24">
         <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
           <Link

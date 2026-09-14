@@ -1,16 +1,13 @@
-import type { Metadata } from "next"
 import Link from "next/link"
 
 import { accreditations } from "@/content/accreditations"
 import { documents } from "@/content/documents"
 import { safetyStatistics } from "@/content/safety"
 import { formatMonthYear } from "@/content/types"
+import { Figures } from "@/components/typography/Figures"
+import { JsonLd, breadcrumbList, complianceMetadata } from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "Compliance | Harrow Mechanical",
-  description:
-    "Accreditations, insurance currency, licensing and safety performance for Harrow Mechanical: ISO 9001, ISO 45001, VBA registration and ARCtick authorisation.",
-}
+export const metadata = complianceMetadata
 
 const insurance = documents.filter((document) => document.category === "Insurance")
 
@@ -30,6 +27,7 @@ const SAFETY_STATS = [
 export default function CompliancePage() {
   return (
     <div className="pb-[var(--spacing-section-generous)]">
+      <JsonLd data={breadcrumbList([{ name: "Compliance", path: "/compliance" }])} />
       <header className="mx-auto w-full max-w-[var(--layout-max)] px-[var(--layout-gutter)] pt-16 lg:px-[var(--layout-gutter-wide)] lg:pt-24">
         <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
           Compliance
@@ -166,7 +164,7 @@ export default function CompliancePage() {
           </Link>
         </div>
         <p className="mt-6 max-w-[var(--measure)] font-body text-base text-text-secondary">
-          {documents.length} certificates and licences, filterable by type,
+          <Figures text={`${documents.length}`} /> certificates and licences, filterable by type,
           each with file size and issue date.
         </p>
       </section>

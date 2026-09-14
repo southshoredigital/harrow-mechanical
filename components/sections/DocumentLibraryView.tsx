@@ -1,7 +1,8 @@
 import { DOCUMENT_CATEGORIES, formatFileSize, formatMonthYear } from "@/content/types"
-import type { ComplianceDocument } from "@/content/types"
 import { applyCategory } from "@/lib/document-filters"
 import type { CategorySelection } from "@/lib/document-filters"
+import type { LibraryDocument } from "@/lib/documents"
+import { Figures } from "@/components/typography/Figures"
 import { cn } from "@/lib/utils"
 
 /**
@@ -14,7 +15,7 @@ import { cn } from "@/lib/utils"
  * without JavaScript, so they should not pretend to.
  */
 export type DocumentLibraryViewProps = {
-  documents: readonly ComplianceDocument[]
+  documents: readonly LibraryDocument[]
   selection: CategorySelection
   onSelect?: (category: CategorySelection) => void
 }
@@ -93,7 +94,7 @@ export function DocumentLibraryView({
                   href={document.file}
                   className="focus-ring after:absolute after:inset-0"
                 >
-                  {document.title}
+                  <Figures text={document.title} />
                 </a>
               </h2>
               <p className="mt-1 font-mono text-xs tracking-label uppercase text-text-secondary">

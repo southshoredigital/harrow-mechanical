@@ -26,8 +26,11 @@ import {
   signalBudgetPerViewport,
   space,
 } from "@/design/tokens"
+import { styleguideMetadata } from "@/lib/seo"
 
 import { PlotterReveal } from "./PlotterReveal"
+
+export const metadata = styleguideMetadata
 
 /**
  * Internal reference sheet. Every value on this page is read from
@@ -282,7 +285,7 @@ export default function StyleguidePage() {
                       leading {fontLeading[key as keyof typeof fontSize]}
                     </span>
                     {key === "hero" ? (
-                      <span className="tracking-mono text-text-accent">
+                      <span className="tracking-mono text-text-primary">
                         Twice on the site, nowhere else
                       </span>
                     ) : null}

@@ -5,7 +5,9 @@ import gsap from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { useGSAP } from "@gsap/react"
 
-import { motion, schematic } from "@/design/tokens"
+import { subscribeLenis } from "@/components/providers/lenis-store"
+import { Figures } from "@/components/typography/Figures"
+import { breakpoint, motion, schematic } from "@/design/tokens"
 
 gsap.registerPlugin(ScrollTrigger)
 
@@ -228,32 +230,44 @@ const NONE_LANDED: LandedState = {
  * The riser schematic.
  *
  * A sectional line diagram of a six level building with a plant deck, with
- * three service branches drawn into it. Each branch plots itself as its own
- * text section scrolls in, scroll linked rather than time linked, and its
- * label wipes in `schematic.labelDelay` after the last line lands. Only the
- * branch whose section is in view carries `schematic.strokeActive`.
+ * three service branches drawn into it. Scroll linked rather than time linked
+ * at every size; each branch label wipes in `schematic.labelDelay` after its
+ * last line lands.
+ *
+ * From lg the figure is sticky and the branch text scrolls past it: each
+ * branch plots as its own section passes, and only the branch whose section
+ * is in view carries `schematic.strokeActive`.
+ *
+ * Below lg a phone cannot show a legible drawing and readable text at once,
+ * so the two are not asked to share the screen. The figure sits in the flow
+ * at full width and plots as it scrolls into view, the branch being drawn
+ * carrying the active stroke, then settles as a finished monochrome drawing.
+ * The three sections follow it as ordinary text.
  *
  * Under prefers-reduced-motion the complete diagram is what renders, with no
- * timeline built at all. Active branch tracking still runs: that is a state
- * change, not an animation, and it is instant.
+ * timeline built at all. From lg, active branch tracking still runs: that is
+ * a state change, not an animation, and it is instant.
  */
 export function RiserSchematic({ title, branches }: RiserSchematicProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const sectionRefs = useRef<(HTMLElement | null)[]>([])
   /**
    * Wraps only the stacked branch sections and the pinned figure, not the
-   * heading above them. The whole scroll sequence is scrubbed against this
-   * element's own top and bottom, so it starts and ends at the same points
-   * regardless of how much content sits above it on the page: at the top of
-   * the document there is no scroll position at which this element's top can
-   * already have passed the top of the viewport, so the sequence can never
-   * be pre-elapsed the way it was when each branch scrubbed against its own
-   * "top bottom" to "top 20%" window against the viewport instead.
+   * heading above them. From lg the whole scroll sequence is scrubbed against
+   * this element's own top and bottom, so it starts and ends at the same
+   * points regardless of how much content sits above it on the page: at the
+   * top of the document there is no scroll position at which this element's
+   * top can already have passed the top of the viewport, so the sequence can
+   * never be pre-elapsed the way it was when each branch scrubbed against its
+   * own "top bottom" to "top 20%" window against the viewport instead.
    */
   const sequenceRef = useRef<HTMLDivElement>(null)
+  /** The figure itself. Below lg the plot is scrubbed against its passage. */
+  const figureRef = useRef<HTMLDivElement>(null)
   const uid = useId().replace(/:/g, "")
 
-  const [active, setActive] = useState<RiserBranchKey>(BRANCH_ORDER[0])
+  /** Null when no branch is live: below lg, before and after the plot. */
+  const [active, setActive] = useState<RiserBranchKey | null>(BRANCH_ORDER[0])
   const [landed, setLanded] = useState<LandedState>(ALL_LANDED)
 
   /**
@@ -273,142 +287,231 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
       const root = rootRef.current
       if (!root) return
 
+      // One scroll position: when Lenis is running, every scroll it applies
+      // is forwarded to ScrollTrigger in the same frame. The wiring lives
+      // here rather than in SmoothScroll so GSAP only loads on this route.
+      let offLenisScroll: (() => void) | null = null
+      let subscribed = false
+      const unsubscribeLenis = subscribeLenis((lenis) => {
+        offLenisScroll?.()
+        offLenisScroll = lenis ? lenis.on("scroll", ScrollTrigger.update) : null
+        // Lenis starting or stopping mid session changes who moves the page,
+        // so positions are measured again. Not on the first call: nothing
+        // has been created to measure yet.
+        if (subscribed) ScrollTrigger.refresh()
+        subscribed = true
+      })
+
       const paths = (branch: RiserBranchKey, part: string) =>
         gsap.utils.toArray<SVGPathElement>(
           `[data-branch="${branch}"] [data-part="${part}"] path`,
           root,
         )
 
-      // Which branch is live. Not motion, so it runs at every preference.
-      const activeTriggers = BRANCH_ORDER.map((key, index) =>
-        ScrollTrigger.create({
-          trigger: sectionRefs.current[index] ?? undefined,
-          start: "top center",
-          end: "bottom center",
-          onToggle: (self) => {
-            if (self.isActive) setActive(key)
-          },
-        }),
-      )
-
       const mm = gsap.matchMedia()
 
-      mm.add("(prefers-reduced-motion: no-preference)", () => {
-        // Hide every line behind the gap of a single dash longer than the
-        // path itself. Butt caps, so nothing pokes out at zero progress.
-        const hiddenLength = (_i: number, el: SVGPathElement) =>
-          Math.ceil(screenLength(el)) + DASH_OVERRUN
-        const hideEls = (els: SVGPathElement[]) =>
-          gsap.set(els, { strokeDasharray: hiddenLength, strokeDashoffset: hiddenLength })
-
-        /**
-         * One continuous timeline for all three branches, played sequentially
-         * so each occupies an equal third of the total scroll distance. A
-         * single ScrollTrigger drives all of it against `sequenceRef`, rather
-         * than one scrub trigger per branch against the viewport: that is
-         * what makes the sequence start and end at the sequence's own edges
-         * instead of at points that depend on how tall the page is above it.
-         */
-        const master = gsap.timeline({ paused: true, defaults: { ease: "none" } })
-        const allPathsByBranch: Record<RiserBranchKey, SVGPathElement[]> = {
-          mechanical: [],
-          hydraulic: [],
-          controls: [],
-        }
-        const branchEnd: Record<RiserBranchKey, number> = {
-          mechanical: 0,
-          hydraulic: 0,
-          controls: 0,
-        }
-
-        BRANCH_ORDER.forEach((key) => {
-          const plant = paths(key, "plant")
-          const risers = paths(key, "risers")
-          const takeoffs = LEVELS.map((_, level) =>
-            paths(key, `takeoff-${level}`),
-          )
-          const all = [...plant, ...risers, ...takeoffs.flat()]
-          allPathsByBranch[key] = all
-          hideEls(all)
-
-          // Not paused: it is nested inside the paused `master` timeline, and
-          // a paused nested timeline does not contribute its duration to the
-          // parent's, which left `master.duration()` at zero.
-          const tl = gsap.timeline({
-            defaults: { ease: "none", strokeDashoffset: 0 },
-          })
-
-          tl.to(plant, { duration: PLANT_UNITS, stagger: PLANT_STAGGER }, 0)
-          tl.to(risers, { duration: RISER_UNITS }, PLANT_UNITS)
-
-          takeoffs.forEach((els, level) => {
-            tl.to(
-              els,
-              { duration: TAKEOFF_UNITS, stagger: TAKEOFF_STAGGER },
-              PLANT_UNITS + RISER_UNITS * riserFraction(LEVELS[level].cy),
-            )
-          })
-
-          master.add(tl)
-          branchEnd[key] = master.duration()
-        })
-
-        const hasLanded = { ...NONE_LANDED }
-        let initialSynced = false
-
-        const sync = () => {
-          const time = master.time()
-          const next: LandedState = {
-            mechanical: time >= branchEnd.mechanical,
-            hydraulic: time >= branchEnd.hydraulic,
-            controls: time >= branchEnd.controls,
+      // Re-runs whenever a condition changes: crossing lg rebuilds the
+      // behaviour for that layout, after the previous one has been reverted.
+      // GSAP only calls this when at least one condition matches, so `always`
+      // is there for a phone with reduced motion, where neither of the others
+      // does and the initial active branch would otherwise never be cleared.
+      mm.add(
+        {
+          always: "all",
+          wide: `(min-width: ${breakpoint.lg})`,
+          allowMotion: "(prefers-reduced-motion: no-preference)",
+        },
+        (context) => {
+          const { wide, allowMotion } = context.conditions as {
+            wide: boolean
+            allowMotion: boolean
           }
 
-          const changed = BRANCH_ORDER.some((key) => next[key] !== hasLanded[key])
-          if (!changed && initialSynced) return
+          // Which branch is live, from lg where text and figure share the
+          // screen. Not motion, so it runs at every preference.
+          const activeTriggers = wide
+            ? BRANCH_ORDER.map((key, index) =>
+                ScrollTrigger.create({
+                  trigger: sectionRefs.current[index] ?? undefined,
+                  start: "top center",
+                  end: "bottom center",
+                  onToggle: (self) => {
+                    if (self.isActive) setActive(key)
+                  },
+                }),
+              )
+            : []
+          setActive(wide ? BRANCH_ORDER[0] : null)
 
-          Object.assign(hasLanded, next)
-          const first = !initialSynced
-          initialSynced = true
-          setLanded(next)
+          const killActive = () => activeTriggers.forEach((trigger) => trigger.kill())
+          if (!allowMotion) return killActive
 
-          // Let the corrected, untransitioned frame paint before allowing
-          // the CSS transition to apply to any later, genuinely scrolled change.
-          if (first) requestAnimationFrame(() => setSkipInitialTransition(false))
-        }
+          // Hide every line behind the gap of a single dash longer than the
+          // path itself. Butt caps, so nothing pokes out at zero progress.
+          const hiddenLength = (_i: number, el: SVGPathElement) =>
+            Math.ceil(screenLength(el)) + DASH_OVERRUN
+          const hideEls = (els: SVGPathElement[]) =>
+            gsap.set(els, { strokeDasharray: hiddenLength, strokeDashoffset: hiddenLength })
 
-        const rootTrigger = ScrollTrigger.create({
-          trigger: sequenceRef.current,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: true,
-          animation: master,
-          onUpdate: sync,
-          onRefresh: sync,
-          // A resize rescales the drawing, so the dash lengths have to be
-          // measured again before the timeline re-reads its start values.
-          onRefreshInit: () => {
-            BRANCH_ORDER.forEach((key) => hideEls(allPathsByBranch[key]))
-            master.invalidate()
-          },
-        })
+          /**
+           * One continuous timeline for all three branches, played
+           * sequentially and driven by a single ScrollTrigger, rather than
+           * one scrub trigger per branch against the viewport.
+           *
+           * From lg it scrubs against `sequenceRef`, and each branch's share
+           * of the timeline is its section's share of the sequence height, so
+           * a branch plots while its own text is passing. Sections are sized
+           * by their content with fixed spacing between them, so the shares
+           * differ and are measured, not assumed equal.
+           *
+           * Below lg it scrubs against the figure's own passage into view and
+           * the branches take equal shares: there is no text beside the
+           * drawing to keep in step with.
+           */
+          const master = gsap.timeline({ paused: true, defaults: { ease: "none" } })
+          const allPathsByBranch: Record<RiserBranchKey, SVGPathElement[]> = {
+            mechanical: [],
+            hydraulic: [],
+            controls: [],
+          }
+          const branchEnd: Record<RiserBranchKey, number> = {
+            mechanical: 0,
+            hydraulic: 0,
+            controls: 0,
+          }
+          const branchTimelines: gsap.core.Timeline[] = []
 
-        // ScrollTrigger.create seeds the animation from the current scroll
-        // position synchronously, so this reflects real progress immediately,
-        // including on a reload part way down the page.
-        sync()
+          /**
+           * Lays the branch timelines end to end, each stretched to its share.
+           * Runs again on every refresh, since a resize rewraps the scope
+           * lists and changes the section heights.
+           */
+          const layoutBranches = () => {
+            let start = 0
+            BRANCH_ORDER.forEach((key, index) => {
+              const share = wide
+                ? Math.max(1, sectionRefs.current[index]?.offsetHeight ?? 1)
+                : 1
+              const tl = branchTimelines[index]
+              tl.startTime(start)
+              tl.duration(share)
+              start += share
+              branchEnd[key] = start
+            })
+          }
 
-        // Reverting to the reduced preference must leave the drawing whole.
-        return () => {
-          setLanded(ALL_LANDED)
-          setSkipInitialTransition(true)
-          rootTrigger.kill()
-        }
-      })
+          BRANCH_ORDER.forEach((key) => {
+            const plant = paths(key, "plant")
+            const risers = paths(key, "risers")
+            const takeoffs = LEVELS.map((_, level) =>
+              paths(key, `takeoff-${level}`),
+            )
+            const all = [...plant, ...risers, ...takeoffs.flat()]
+            allPathsByBranch[key] = all
+            hideEls(all)
+
+            // Not paused: it is nested inside the paused `master` timeline, and
+            // a paused nested timeline does not contribute its duration to the
+            // parent's, which left `master.duration()` at zero.
+            const tl = gsap.timeline({
+              defaults: { ease: "none", strokeDashoffset: 0 },
+            })
+
+            tl.to(plant, { duration: PLANT_UNITS, stagger: PLANT_STAGGER }, 0)
+            tl.to(risers, { duration: RISER_UNITS }, PLANT_UNITS)
+
+            takeoffs.forEach((els, level) => {
+              tl.to(
+                els,
+                { duration: TAKEOFF_UNITS, stagger: TAKEOFF_STAGGER },
+                PLANT_UNITS + RISER_UNITS * riserFraction(LEVELS[level].cy),
+              )
+            })
+
+            master.add(tl)
+            branchTimelines.push(tl)
+          })
+          layoutBranches()
+
+          const hasLanded = { ...NONE_LANDED }
+          let drawing: RiserBranchKey | null = null
+          let initialSynced = false
+
+          const sync = () => {
+            const time = master.time()
+            const next: LandedState = {
+              mechanical: time >= branchEnd.mechanical,
+              hydraulic: time >= branchEnd.hydraulic,
+              controls: time >= branchEnd.controls,
+            }
+
+            // Below lg the live branch is the one being drawn, and none before
+            // the plot starts or once the drawing is finished.
+            if (!wide) {
+              const now = time > 0 ? (BRANCH_ORDER.find((key) => !next[key]) ?? null) : null
+              if (now !== drawing) {
+                drawing = now
+                setActive(now)
+              }
+            }
+
+            const changed = BRANCH_ORDER.some((key) => next[key] !== hasLanded[key])
+            if (!changed && initialSynced) return
+
+            Object.assign(hasLanded, next)
+            const first = !initialSynced
+            initialSynced = true
+            setLanded(next)
+
+            // Let the corrected, untransitioned frame paint before allowing
+            // the CSS transition to apply to any later, genuinely scrolled change.
+            if (first) requestAnimationFrame(() => setSkipInitialTransition(false))
+          }
+
+          const scrubTrigger = ScrollTrigger.create({
+            ...(wide
+              ? { trigger: sequenceRef.current, start: "top top", end: "bottom bottom" }
+              : {
+                  // From the figure's top entering the viewport to its bottom
+                  // arriving there: the drawing completes as it comes fully
+                  // into view.
+                  trigger: figureRef.current,
+                  start: "top bottom",
+                  end: "bottom bottom",
+                }),
+            scrub: true,
+            animation: master,
+            onUpdate: sync,
+            onRefresh: sync,
+            // A resize rescales the drawing, so the dash lengths have to be
+            // measured again before the timeline re-reads its start values.
+            onRefreshInit: () => {
+              BRANCH_ORDER.forEach((key) => hideEls(allPathsByBranch[key]))
+              layoutBranches()
+              master.invalidate()
+            },
+          })
+
+          // ScrollTrigger.create seeds the animation from the current scroll
+          // position synchronously, so this reflects real progress immediately,
+          // including on a reload part way down the page.
+          sync()
+
+          // Reverting to the reduced preference, or across lg, must leave the
+          // drawing whole.
+          return () => {
+            setLanded(ALL_LANDED)
+            setSkipInitialTransition(true)
+            scrubTrigger.kill()
+            killActive()
+          }
+        },
+      )
 
       return () => {
+        unsubscribeLenis()
+        offLenisScroll?.()
         mm.revert()
-        activeTriggers.forEach((trigger) => trigger.kill())
       }
     },
     { scope: rootRef },
@@ -433,16 +536,25 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
 
         <div ref={sequenceRef} className="xl:grid xl:grid-cols-[22rem_1fr] xl:gap-12">
           {/*
-            Below xl the figure pins to the top and the text passes beneath
-            it, so it carries the page background and a closing rule. At xl
-            it sits in its own column and nothing passes behind it.
+            Below lg the figure is in the flow at full width, its height set
+            by the drawing's own proportions, and the text follows it.
+            From lg to xl it pins to the top and the text passes beneath it,
+            so it carries the page background and a closing rule. At xl it
+            sits in its own column and nothing passes behind it.
           */}
-          <div className="sticky top-[var(--rail-mobile-total-height)] z-10 -mx-[var(--layout-gutter)] h-[58svh] border-b border-border-hairline bg-surface-page py-4 lg:top-0 xl:col-start-2 xl:row-start-1 xl:mx-0 xl:h-svh xl:border-b-0 xl:py-12">
+          <div
+            ref={figureRef}
+            className="-mx-[var(--layout-gutter)] border-b border-border-hairline bg-surface-page py-4 lg:sticky lg:top-0 lg:z-10 lg:h-[58svh] xl:col-start-2 xl:row-start-1 xl:mx-0 xl:h-svh xl:border-b-0 xl:py-12"
+          >
             <svg
               viewBox={VIEW_BOX}
               preserveAspectRatio="xMidYMid meet"
               role="img"
-              aria-labelledby={`${titleId} ${descId}`}
+              // Title is the name, desc is the description: a screen reader
+              // announces the short name first and the full account after,
+              // rather than one paragraph-long name.
+              aria-labelledby={titleId}
+              aria-describedby={descId}
               fill="none"
               strokeLinecap="butt"
               strokeLinejoin="miter"
@@ -452,7 +564,7 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
                 branch labels take. Below xl the drawing is scaled down hard,
                 so it steps up a size to stay readable outdoors.
               */
-              className="h-full w-full font-mono text-md tracking-label xl:text-sm"
+              className="h-auto w-full font-mono text-md tracking-label lg:h-full xl:text-sm"
             >
               <title id={titleId}>
                 Riser schematic: mechanical, hydraulic and controls services
@@ -621,7 +733,7 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
             </svg>
           </div>
 
-          <div className="xl:col-start-1 xl:row-start-1">
+          <div className="pt-[var(--spacing-section-compact)] xl:col-start-1 xl:row-start-1 xl:pt-0">
             {BRANCH_ORDER.map((key, index) => {
               const branch = branches[key]
 
@@ -632,7 +744,11 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
                     sectionRefs.current[index] = el
                   }}
                   aria-labelledby={`${uid}-${key}`}
-                  className="flex min-h-svh flex-col justify-end pb-12 xl:justify-center xl:pb-0"
+                  // Spacing is one token between sections, never leftover
+                  // height: a min-height with centred or bottom-aligned
+                  // content made the gap depend on how long the scope list
+                  // was, down to nothing when it outgrew the viewport.
+                  className="pt-[var(--spacing-section-default)] first:pt-0"
                 >
                   <p className="font-mono text-xs tracking-label text-text-secondary">
                     {`0${index + 1}`}
@@ -646,7 +762,7 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
                   </h3>
 
                   <p className="mt-4 max-w-[var(--measure)] text-base text-text-secondary">
-                    {branch.summary}
+                    <Figures text={branch.summary} />
                   </p>
 
                   <ul className="mt-8 max-w-[var(--measure)] border-t border-border-hairline">
@@ -659,7 +775,7 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
                           {String(scopeIndex + 1).padStart(2, "0")}
                         </span>
                         <span className="text-sm text-text-primary">
-                          {item}
+                          <Figures text={item} />
                         </span>
                       </li>
                     ))}

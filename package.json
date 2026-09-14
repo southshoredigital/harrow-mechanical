@@ -8,7 +8,10 @@
     "dev": "pnpm tokens && next dev --turbopack",
     "build": "pnpm tokens && pnpm check-content && next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "playwright test",
+    "test:visual:update": "playwright test visual.spec.ts --update-snapshots",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

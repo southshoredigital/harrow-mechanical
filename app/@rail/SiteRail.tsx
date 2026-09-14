@@ -1,6 +1,7 @@
 import { SpecRail } from "@/components/sections/SpecRail"
 import type { RailDatum, RailSubIndex } from "@/components/sections/SpecRail"
 import { SITE_SECTIONS } from "@/content/sections"
+import { LOGO } from "@/lib/brand"
 
 /**
  * The rail as every page renders it: the same identifier and section index,
@@ -21,6 +22,7 @@ export function SiteRail({
   return (
     <SpecRail
       identifier="Harrow Mechanical"
+      logo={LOGO.lockup}
       sections={SITE_SECTIONS}
       data={data}
       index={index}

@@ -1,19 +1,22 @@
-import type { Metadata } from "next"
 import Link from "next/link"
 
 import { RiserSchematic } from "@/components/sections/RiserSchematic"
+import { Figures } from "@/components/typography/Figures"
 import type {
   RiserBranchKey,
   RiserSchematicProps,
 } from "@/components/sections/RiserSchematic"
 import { capabilities } from "@/content/capabilities"
 import { ICON_BY_SYSTEM } from "@/lib/capabilities"
+import {
+  JsonLd,
+  breadcrumbList,
+  capabilitiesMetadata,
+  graph,
+  service,
+} from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "Capabilities | Harrow Mechanical",
-  description:
-    "Mechanical, hydraulic, controls, commissioning and maintenance capability: chiller plant, AHU, BMS, hydronic reticulation and AIRAH commissioning.",
-}
+export const metadata = capabilitiesMetadata
 
 /**
  * Capabilities. Leads with the riser schematic, the memorable moment, then
@@ -44,6 +47,12 @@ const branches: RiserSchematicProps["branches"] = {
 export default function CapabilitiesPage() {
   return (
     <div className="pb-[var(--spacing-section-generous)]">
+      <JsonLd
+        data={graph(
+          breadcrumbList([{ name: "Capabilities", path: "/capabilities" }]),
+          ...capabilities.map(service)
+        )}
+      />
       <header className="mx-auto w-full max-w-[var(--layout-max)] px-[var(--layout-gutter)] pt-16 lg:px-[var(--layout-gutter-wide)] lg:pt-24">
         <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
           Capability by system
@@ -95,7 +104,7 @@ export default function CapabilitiesPage() {
                   <span className="font-mono text-xs tracking-label uppercase text-text-primary">
                     {capability.title}
                   </span>
-                  <p className="text-sm text-text-secondary">{capability.summary}</p>
+                  <p className="text-sm text-text-secondary"><Figures text={capability.summary} /></p>
                 </Link>
               </li>
             )

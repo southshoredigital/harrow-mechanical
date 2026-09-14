@@ -31,10 +31,10 @@ export function categoryQuery(selection: CategorySelection) {
   return params.toString()
 }
 
-export function applyCategory(
-  documents: readonly ComplianceDocument[],
+export function applyCategory<T extends ComplianceDocument>(
+  documents: readonly T[],
   selection: CategorySelection
-) {
+): readonly T[] {
   return selection
     ? documents.filter((document) => document.category === selection)
     : documents

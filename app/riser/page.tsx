@@ -4,6 +4,9 @@ import type {
   RiserSchematicProps,
 } from "@/components/sections/RiserSchematic"
 import { capabilities } from "@/content/capabilities"
+import { riserMetadata } from "@/lib/seo"
+
+export const metadata = riserMetadata
 
 /**
  * Temporary route. Exercises the riser schematic in isolation, with real
@@ -63,9 +66,9 @@ export default function RiserCheckPage() {
               <dt className="font-mono text-xs tracking-label uppercase text-text-secondary lg:order-2">
                 {capability.title}
               </dt>
-              <p className="font-mono text-xs tracking-mono text-text-secondary lg:order-1">
+              <dd className="font-mono text-xs tracking-mono text-text-secondary lg:order-1">
                 {String(index + 1).padStart(2, "0")}
-              </p>
+              </dd>
               <dd className="max-w-[var(--measure)] text-base text-text-secondary lg:order-3">
                 {capability.summary}
               </dd>

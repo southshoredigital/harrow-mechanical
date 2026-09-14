@@ -7,6 +7,13 @@ import { capabilities } from "@/content/capabilities"
 import { formatValue } from "@/content/types"
 import { ICON_BY_SYSTEM, getCapability } from "@/lib/capabilities"
 import { getProject } from "@/lib/projects"
+import {
+  JsonLd,
+  breadcrumbList,
+  capabilityMetadata,
+  graph,
+  service,
+} from "@/lib/seo"
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -18,12 +25,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const capability = getCapability((await params).slug)
-  if (!capability) return {}
-
-  return {
-    title: `${capability.title} | Harrow Mechanical`,
-    description: capability.summary,
-  }
+  return capability ? capabilityMetadata(capability) : {}
 }
 
 export default async function CapabilityPage({ params }: Props) {
@@ -37,6 +39,15 @@ export default async function CapabilityPage({ params }: Props) {
 
   return (
     <article className="pb-[var(--spacing-section-generous)]">
+      <JsonLd
+        data={graph(
+          breadcrumbList([
+            { name: "Capabilities", path: "/capabilities" },
+            { name: capability.title, path: `/capabilities/${capability.slug}` },
+          ]),
+          service(capability)
+        )}
+      />
       <header className="mx-auto w-full max-w-[var(--layout-max)] px-[var(--layout-gutter)] pt-16 lg:px-[var(--layout-gutter-wide)] lg:pt-24">
         <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
           <Link href="/capabilities" className="focus-ring hover:text-text-primary">
@@ -55,7 +66,7 @@ export default async function CapabilityPage({ params }: Props) {
               {capability.title}
             </h1>
             <p className="mt-4 max-w-[var(--measure)] font-body text-base text-text-secondary">
-              {capability.summary}
+              <Figures text={capability.summary} />
             </p>
           </div>
         </div>

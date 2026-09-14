@@ -1,15 +1,47 @@
 import type { Metadata } from "next"
 
 import { SmoothScroll } from "@/components/providers/SmoothScroll"
+import { SiteFooter } from "@/components/sections/SiteFooter"
+import { LOGO } from "@/lib/brand"
+import {
+  JsonLd,
+  SITE,
+  graph,
+  homeMetadata,
+  localBusiness,
+  organization,
+} from "@/lib/seo"
 
 import { cabinet, switzer, jetbrains } from "./fonts"
 import "./globals.css"
 
+/**
+ * Site wide defaults. Every page sets its own title, description and
+ * canonical through lib/seo; these apply only where a route has none, such
+ * as the 404.
+ *
+ * `index: false` holds for the whole site: this is a concept for a fictional
+ * business and must not be indexed.
+ */
 export const metadata: Metadata = {
-  title: "Harrow Mechanical",
-  description:
-    "Commercial mechanical services contractor. Concept project by Southshore Digital.",
+  metadataBase: new URL(SITE.url),
+  title: homeMetadata.title,
+  description: homeMetadata.description,
+  openGraph: { siteName: SITE.name, locale: SITE.locale, type: "website" },
   robots: { index: false, follow: false },
+  // The mark alone, straight from public/, so there is one copy of each file.
+  // The paper version is listed second: browsers take the last icon whose
+  // media matches, so a dark tab bar gets the mark it can show.
+  icons: {
+    icon: [
+      { url: LOGO.mark.src, type: "image/svg+xml" },
+      {
+        url: LOGO.markInverse.src,
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+  },
 }
 
 export default function RootLayout({
@@ -26,6 +58,7 @@ export default function RootLayout({
       className={`${cabinet.variable} ${switzer.variable} ${jetbrains.variable}`}
     >
       <body className="bg-surface-page text-text-primary">
+        <JsonLd data={graph(organization(), localBusiness())} />
         <SmoothScroll />
 
         <a
@@ -54,6 +87,12 @@ export default function RootLayout({
           >
             {children}
           </main>
+
+          {/*
+            Inside the padded column, so from lg it sits clear of the fixed
+            rail rather than underneath it.
+          */}
+          <SiteFooter />
         </div>
       </body>
     </html>

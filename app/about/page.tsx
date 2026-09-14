@@ -1,14 +1,10 @@
-import type { Metadata } from "next"
-
+import { Figures } from "@/components/typography/Figures"
 import { accreditations } from "@/content/accreditations"
 import { projects } from "@/content/projects"
 import { SECTORS } from "@/content/types"
+import { JsonLd, aboutMetadata, breadcrumbList } from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "About | Harrow Mechanical",
-  description:
-    "Harrow Mechanical: founded 1994, 58 staff, Dandenong South, across five sectors and $400,000 to $4.2m contracts.",
-}
+export const metadata = aboutMetadata
 
 const FOUNDED_YEAR = 1994
 const STAFF = 58
@@ -35,12 +31,15 @@ const STATS = [
 export default function AboutPage() {
   return (
     <div className="pb-[var(--spacing-section-generous)]">
+      <JsonLd data={breadcrumbList([{ name: "About", path: "/about" }])} />
       <header className="mx-auto w-full max-w-[var(--layout-max)] px-[var(--layout-gutter)] pt-16 lg:px-[var(--layout-gutter-wide)] lg:pt-24">
         <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
           About
         </p>
         <h1 className="mt-4 max-w-[var(--measure)] font-display text-3xl tracking-display text-text-primary lg:text-4xl">
-          How long we&#39;ve been doing this, in numbers.
+          <Figures
+            text={`${yearsOperating} years, ${STAFF} staff and ${projects.length} projects on record, out of Dandenong South.`}
+          />
         </h1>
       </header>
 

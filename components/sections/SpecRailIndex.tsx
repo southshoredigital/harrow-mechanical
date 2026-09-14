@@ -57,8 +57,11 @@ function alignActiveItem(
 }
 
 /**
- * Numbered section index. Active state is colour plus weight plus
- * aria-current, so it never rests on colour alone.
+ * Numbered section index. Active state is a signal rule under the entry,
+ * plus weight, plus aria-current, so it never rests on colour alone.
+ *
+ * The entry text itself stays in ink: signal is a rule here, never the text
+ * colour, because at `xs` signal on paper is 3.47:1 and fails AA.
  *
  * One index, two arrangements: a column in the fixed rail, a horizontally
  * scrolling row in the sticky strip below `lg`. The items themselves are the
@@ -116,6 +119,8 @@ export function RailIndex({
           >
             <Link
               href={section.href}
+              // Rail links are on screen on every page: no viewport prefetch.
+              prefetch={false}
               aria-current={isActive ? "page" : undefined}
               className={cn(
                 "focus-ring",
@@ -123,7 +128,7 @@ export function RailIndex({
                   ? "flex h-full items-center gap-2 pr-6"
                   : "grid grid-cols-[2.5ch_1fr] items-baseline gap-3",
                 isActive
-                  ? "font-medium text-text-accent"
+                  ? "font-medium text-text-primary underline decoration-signal decoration-[length:var(--rail-active-rule)] underline-offset-4"
                   : "text-text-secondary hover:text-text-primary"
               )}
             >
@@ -151,7 +156,7 @@ export function RailCurrent({ sections }: { sections: readonly RailSection[] }) 
   if (activeIndex < 0) return null
 
   return (
-    <p className="truncate text-text-accent">
+    <p className="truncate text-text-primary">
       <span aria-hidden="true">{sheetNumber(activeIndex)} / </span>
       {sections[activeIndex].label}
     </p>

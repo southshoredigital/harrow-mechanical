@@ -1,16 +1,13 @@
-import type { Metadata } from "next"
-
 import { ContactForms } from "@/components/forms/ContactForms"
+import { Figures } from "@/components/typography/Figures"
+import { JsonLd, breadcrumbList, contactMetadata } from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "Contact | Harrow Mechanical",
-  description:
-    "Three ways to reach Harrow Mechanical: a tender enquiry, a service call, or a careers application.",
-}
+export const metadata = contactMetadata
 
 export default function ContactPage() {
   return (
     <div className="pb-[var(--spacing-section-generous)]">
+      <JsonLd data={breadcrumbList([{ name: "Contact", path: "/contact" }])} />
       <header className="mx-auto w-full max-w-[var(--layout-max)] px-[var(--layout-gutter)] pt-16 lg:px-[var(--layout-gutter-wide)] lg:pt-24">
         <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
           Contact
@@ -19,8 +16,7 @@ export default function ContactPage() {
           Three reasons to get in touch, three different forms.
         </h1>
         <p className="mt-6 max-w-[var(--measure)] font-body text-base text-text-secondary">
-          Choose the one that matches why you&#39;re here. Each goes straight
-          to the right team.
+          <Figures text="Tender enquiries go to estimating and get a reply within 1 business day. Emergency service calls are actioned the same day, routine and urgent within 1 business day. Every application gets a reply within 7 days." />
         </p>
       </header>
 

@@ -235,6 +235,27 @@ export const rail = {
   mobileHeight: `${railMobileStripRem}rem`,
   mobileIndexHeight: `${railMobileIndexRem}rem`,
   mobileTotalHeight: `${railMobileStripRem + railMobileIndexRem}rem`,
+  /**
+   * The signal rule under the active index entry. The active state carries
+   * signal as a rule, not as text colour: the entries are set at `xs`, where
+   * signal's 3.47:1 on paper fails AA and washes out in sunlight. Two pixels,
+   * matching the focus outline, so it holds at a glance on a phone.
+   */
+  activeRule: '0.125rem',
+} as const
+
+/**
+ * Rendered height of the logo lockup. Width follows from the asset's own
+ * proportions; the logo is never stretched, cropped or recoloured.
+ *
+ * `rail` fits the desktop title block inside `rail.width` less its padding.
+ * `railMobile` sits inside the 2.75rem strip with room above and below.
+ * `block` is the lockup on the capability statement, on ink.
+ */
+export const logo = {
+  rail: '1.5rem',
+  railMobile: '1.25rem',
+  block: '2rem',
 } as const
 
 /**

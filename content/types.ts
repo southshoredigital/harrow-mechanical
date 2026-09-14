@@ -91,8 +91,8 @@ export type ComplianceDocument = {
   category: DocumentCategory
   /** Path under /public/documents, e.g. '/documents/public-liability.pdf' */
   file: string
-  /** Bytes. Displayed in mono next to the link. */
-  fileSize: number
+  /* No file size here: it is read from the file itself at build time, in
+     lib/documents.ts, so a replaced PDF can never show a stale size. */
   /** ISO date, e.g. '2026-03-01' */
   issueDate: string
   expiryDate?: string
@@ -134,6 +134,33 @@ export type SafetyStatistics = {
   notifiableIncidents: number
   /** ISO date. When these figures were last checked against the register. */
   lastReviewed: string
+}
+
+export type Company = {
+  name: string
+  /** Formatted as the ATO prints it, 'NN NNN NNN NNN'. Rendered in mono. */
+  abn: string
+  address: {
+    street: string
+    locality: string
+    /** State abbreviation, e.g. 'VIC'. */
+    region: string
+    postcode: string
+    /** ISO 3166 country code. */
+    country: string
+  }
+  phone: {
+    /** As printed, e.g. '(03) 5550 4417'. */
+    display: string
+    /** E.164, for tel: links and structured data, e.g. '+61355504417'. */
+    e164: string
+  }
+  email: string
+  /** Who made the concept, for the disclosure in the footer. */
+  concept: {
+    studio: string
+    url: string
+  }
 }
 
 /** Derives the scale band from a contract value. */

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation"
 import { Figures } from "@/components/typography/Figures"
 import { roles } from "@/content/roles"
 import { getRole } from "@/lib/roles"
+import { JsonLd, breadcrumbList, roleMetadata } from "@/lib/seo"
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -16,12 +17,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const role = getRole((await params).slug)
-  if (!role) return {}
-
-  return {
-    title: `${role.title} | Harrow Mechanical`,
-    description: role.description[0],
-  }
+  return role ? roleMetadata(role) : {}
 }
 
 export default async function RolePage({ params }: Props) {
@@ -30,6 +26,12 @@ export default async function RolePage({ params }: Props) {
 
   return (
     <article className="pb-[var(--spacing-section-generous)]">
+      <JsonLd
+        data={breadcrumbList([
+          { name: "Careers", path: "/careers" },
+          { name: role.title, path: `/careers/${role.slug}` },
+        ])}
+      />
       <header className="mx-auto w-full max-w-[var(--layout-max)] px-[var(--layout-gutter)] pt-16 lg:px-[var(--layout-gutter-wide)] lg:pt-24">
         <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
           <Link href="/careers" className="focus-ring hover:text-text-primary">
@@ -38,7 +40,7 @@ export default async function RolePage({ params }: Props) {
           / {role.location}
         </p>
         <h1 className="mt-4 max-w-[var(--measure)] font-display text-3xl tracking-display text-text-primary lg:text-4xl">
-          {role.title}
+          <Figures text={role.title} />
         </h1>
 
         <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-border-hairline pt-6 sm:grid-cols-3">
@@ -113,7 +115,7 @@ export default async function RolePage({ params }: Props) {
         <section className="mt-[var(--spacing-section-compact)] border-t border-border-accent pt-6">
           <p className="max-w-[var(--measure)] font-body text-base text-text-primary">
             To apply, use the careers path on the{" "}
-            <Link href="/contact" className="focus-ring text-text-accent underline">
+            <Link href="/contact" className="focus-ring text-text-primary underline">
               contact page
             </Link>
             .

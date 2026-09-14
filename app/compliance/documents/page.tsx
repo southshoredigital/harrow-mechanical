@@ -1,19 +1,24 @@
 import { Suspense } from "react"
-import type { Metadata } from "next"
 
 import { DocumentLibrary } from "@/components/sections/DocumentLibrary"
 import { DocumentLibraryView } from "@/components/sections/DocumentLibraryView"
-import { documents } from "@/content/documents"
+import { libraryDocuments } from "@/lib/documents"
+import { JsonLd, breadcrumbList, documentsMetadata } from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "Document library | Harrow Mechanical",
-  description:
-    "Insurance certificates of currency, licences, ISO certification and safety documentation, filterable by category.",
-}
+export const metadata = documentsMetadata
+
+/** Sizes are measured from public/documents when the page is built. */
+const documents = libraryDocuments()
 
 export default function DocumentsPage() {
   return (
     <div className="mx-auto w-full max-w-[var(--layout-max)] px-[var(--layout-gutter)] pt-16 pb-[var(--spacing-section-generous)] lg:px-[var(--layout-gutter-wide)] lg:pt-24">
+      <JsonLd
+        data={breadcrumbList([
+          { name: "Compliance", path: "/compliance" },
+          { name: "Document library", path: "/compliance/documents" },
+        ])}
+      />
       <header>
         <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
           Compliance / Document library

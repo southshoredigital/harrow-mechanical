@@ -1,17 +1,13 @@
 import { Suspense } from "react"
-import type { Metadata } from "next"
 
 import { ProjectIndex } from "@/components/sections/ProjectIndex"
 import { ProjectIndexView } from "@/components/sections/ProjectIndexView"
 import { SECTORS, formatValue } from "@/content/types"
 import { EMPTY_SELECTION } from "@/lib/project-filters"
 import { scheduleRows } from "@/lib/projects"
+import { JsonLd, breadcrumbList, projectsMetadata } from "@/lib/seo"
 
-export const metadata: Metadata = {
-  title: "Projects | Harrow Mechanical",
-  description:
-    "Mechanical, hydraulic and controls contracts by sector, system and contract scale, with value, duration and completion year for each.",
-}
+export const metadata = projectsMetadata
 
 /**
  * Projects index. The centrepiece of the site per the brief: an estimator
@@ -38,6 +34,7 @@ export default function ProjectsPage() {
 
   return (
     <div className="mx-auto w-full max-w-[var(--layout-max)] px-[var(--layout-gutter)] pt-16 pb-[var(--spacing-section-generous)] lg:px-[var(--layout-gutter-wide)] lg:pt-24">
+      <JsonLd data={breadcrumbList([{ name: "Projects", path: "/projects" }])} />
       <header className="grid gap-8 lg:grid-cols-12 lg:gap-12">
         <div className="lg:col-span-7">
           <h1 className="font-display text-3xl tracking-display text-text-primary lg:text-4xl">

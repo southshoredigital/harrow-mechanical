@@ -45,3 +45,11 @@ app/tokens.css
 
 .vercel
 .env*
+
+# playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/.lighthouseci/
+/boilerplate-shots/
+/boilerplate-report.json

@@ -3,9 +3,9 @@
 import { useCallback } from "react"
 import { usePathname, useSearchParams } from "next/navigation"
 
-import type { ComplianceDocument } from "@/content/types"
 import { categoryQuery, readCategory } from "@/lib/document-filters"
 import type { CategorySelection } from "@/lib/document-filters"
+import type { LibraryDocument } from "@/lib/documents"
 
 import { DocumentLibraryView } from "./DocumentLibraryView"
 
@@ -20,7 +20,7 @@ import { DocumentLibraryView } from "./DocumentLibraryView"
 export function DocumentLibrary({
   documents,
 }: {
-  documents: readonly ComplianceDocument[]
+  documents: readonly LibraryDocument[]
 }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()

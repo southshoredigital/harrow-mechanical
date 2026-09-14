@@ -1,6 +1,7 @@
 "use client"
 
-import { useId, useState } from "react"
+import { useId, useRef, useState } from "react"
+import type { KeyboardEvent } from "react"
 
 import { CareersForm } from "./CareersForm"
 import { ServiceForm } from "./ServiceForm"
@@ -32,10 +33,32 @@ type PathKey = (typeof PATHS)[number]["key"]
  * Three distinct forms behind a tab switcher, not one form with a type
  * dropdown: each path has its own fields, its own route and its own
  * confirmation copy, so the tabs are the only thing they share.
+ *
+ * Keyboard follows the WAI-ARIA tabs pattern: the tab list is one stop in the
+ * Tab sequence, arrow keys, Home and End move between paths and select as
+ * they go, and Tab from the selected tab lands in its form.
  */
 export function ContactForms() {
   const [active, setActive] = useState<PathKey>("tender")
   const tablistId = useId()
+  const tabRefs = useRef<Partial<Record<PathKey, HTMLButtonElement | null>>>({})
+
+  const onTabKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    const index = PATHS.findIndex((path) => path.key === active)
+    const last = PATHS.length - 1
+    const next = {
+      ArrowRight: index === last ? 0 : index + 1,
+      ArrowLeft: index === 0 ? last : index - 1,
+      Home: 0,
+      End: last,
+    }[event.key]
+
+    if (next === undefined) return
+    event.preventDefault()
+    const key = PATHS[next].key
+    setActive(key)
+    tabRefs.current[key]?.focus()
+  }
 
   return (
     <div>
@@ -49,12 +72,17 @@ export function ContactForms() {
           return (
             <button
               key={path.key}
+              ref={(el) => {
+                tabRefs.current[path.key] = el
+              }}
               type="button"
               role="tab"
               id={`${tablistId}-tab-${path.key}`}
               aria-selected={selected}
               aria-controls={`${tablistId}-panel-${path.key}`}
+              tabIndex={selected ? 0 : -1}
               onClick={() => setActive(path.key)}
+              onKeyDown={onTabKeyDown}
               className={cn(
                 "focus-ring min-h-[var(--tap-target)] flex-1 border border-border-hairline px-4 font-mono text-xs tracking-label uppercase",
                 selected

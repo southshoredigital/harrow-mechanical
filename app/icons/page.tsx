@@ -5,6 +5,9 @@ import {
   Commissioning,
   Maintenance,
 } from "@/components/icons"
+import { iconsMetadata } from "@/lib/seo"
+
+export const metadata = iconsMetadata
 
 /**
  * Temporary route. Checks optical weight of the five capability symbols
@@ -24,7 +27,7 @@ const sizes = [32, 48, 96] as const
 
 export default function IconsCheckPage() {
   return (
-    <main className="min-h-screen bg-paper p-16">
+    <div className="min-h-screen bg-paper p-16">
       <p className="font-mono text-xs tracking-label uppercase text-text-secondary">
         Icon check / temporary
       </p>
@@ -54,6 +57,6 @@ export default function IconsCheckPage() {
           </section>
         ))}
       </div>
-    </main>
+    </div>
   )
 }
