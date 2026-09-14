@@ -139,21 +139,9 @@ export const contactMetadata: Metadata = pageMetadata({
 })
 
 /**
- * Review routes. Not in the content plan, not in the sitemap, and marked
- * noindex explicitly so they stay out even if the root robots rule changes.
+ * Every content route. The sitemap lists these only when the site is
+ * indexable; the test suite runs against them either way.
  */
-function reviewRoute(title: string, path: string): Metadata {
-  return {
-    ...pageMetadata({ title, description: `${title}, internal review route.`, path }),
-    robots: { index: false, follow: false },
-  }
-}
-
-export const styleguideMetadata = reviewRoute("Styleguide", "/styleguide")
-export const iconsMetadata = reviewRoute("Icon check", "/icons")
-export const riserMetadata = reviewRoute("Riser check", "/riser")
-
-/** Every route that belongs in the sitemap. */
 export function sitemapPaths() {
   return [
     "/",

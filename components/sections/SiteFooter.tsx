@@ -13,7 +13,7 @@ import { SITE_SECTIONS } from "@/content/sections"
  * Below lg the rail is two sticky lines at the top of the viewport; the
  * scroll margin keeps an anchor jump or a focus scroll to the footer from
  * landing underneath them. From lg the footer sits in the padded content
- * column, clear of the fixed rail.
+ * column, clear of the fixed rail, and the margin clears the concept bar.
  *
  * Section links set prefetch={false} for the same reason the rail's do: the
  * same six routes, fetched speculatively on every page, cost 55KB on mobile
@@ -33,7 +33,7 @@ export function SiteFooter() {
   const { address, phone } = company
 
   return (
-    <footer className="mx-auto w-full max-w-[var(--layout-max)] scroll-mt-[var(--rail-mobile-total-height)] px-[var(--layout-gutter)] lg:scroll-mt-0 lg:px-[var(--layout-gutter-wide)]">
+    <footer className="mx-auto w-full max-w-[var(--layout-max)] scroll-mt-[var(--rail-mobile-total-height)] px-[var(--layout-gutter)] lg:scroll-mt-[var(--concept-bar-height)] lg:px-[var(--layout-gutter-wide)]">
       <div className="grid gap-8 border-t border-border-hairline py-12 lg:grid-cols-12 lg:gap-12">
         <address className="not-italic lg:col-span-5">
           <dl className="grid grid-cols-1 gap-y-4 sm:grid-cols-2 sm:gap-x-6">

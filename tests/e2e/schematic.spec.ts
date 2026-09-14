@@ -1,6 +1,8 @@
 import { expect, test } from "@playwright/test"
 import type { Page } from "@playwright/test"
 
+import { schematic } from "@/design/tokens"
+
 import { openSettled } from "./support/page"
 
 /**
@@ -88,6 +90,9 @@ test.describe("lg to xl: figure pinned above the text", () => {
 test.describe("below lg: drawing first, then the text", () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
+  /** Long enough for the eased scrub to have caught up with the scroll. */
+  const SETTLED = schematic.catchUpNarrow + 700
+
   test("the figure is in the flow, not pinned over the text", async ({ page }) => {
     await openSettled(page, "/capabilities")
     expect(await figurePosition(page)).not.toBe("sticky")
@@ -125,7 +130,7 @@ test.describe("below lg: drawing first, then the text", () => {
 
     // Half way through its passage into view: part drawn, one branch live.
     await page.evaluate((y) => window.scrollTo(0, y), figureTop - 844 + figureHeight / 2)
-    await page.waitForTimeout(600)
+    await page.waitForTimeout(SETTLED)
     const midway = await hiddenPathCount(page)
     expect(midway).toBeGreaterThan(0)
     expect(midway).toBeLessThan(total)
@@ -133,8 +138,29 @@ test.describe("below lg: drawing first, then the text", () => {
 
     // Fully in view: a finished monochrome drawing.
     await page.evaluate((y) => window.scrollTo(0, y), figureTop)
-    await page.waitForTimeout(600)
+    await page.waitForTimeout(SETTLED)
     expect(await hiddenPathCount(page)).toBe(0)
     expect(await activeBranches(page)).toEqual([])
+  })
+
+  test("a fling draws over the catch-up time rather than in one frame", async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: "no-preference" })
+    await openSettled(page, "/capabilities")
+
+    const total = await page.locator('svg[role="img"] [data-branch] [data-part] path').count()
+    const figureTop = await page
+      .locator(FIGURE)
+      .evaluate((svg) => svg.parentElement!.getBoundingClientRect().top + scrollY)
+
+    // Jump straight past the whole plot, as a hard fling would.
+    await page.evaluate((y) => window.scrollTo(0, y), figureTop)
+    const justAfter = await page.evaluate(
+      () => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+    ).then(() => hiddenPathCount(page))
+    expect(justAfter, "the drawing should still be catching up").toBeGreaterThan(0)
+    expect(justAfter).toBeLessThanOrEqual(total)
+
+    await page.waitForTimeout(SETTLED)
+    expect(await hiddenPathCount(page), "and then land complete").toBe(0)
   })
 })

@@ -16,6 +16,7 @@ import {
     breakpoint,
     layout,
     logo,
+    conceptBar,
 } from '../design/tokens.ts'
 
 const lines = ['@theme {']
@@ -67,6 +68,7 @@ lines.push(`  --rail-mobile-index-height: ${rail.mobileIndexHeight};`)
 lines.push(`  --rail-mobile-total-height: ${rail.mobileTotalHeight};`)
 lines.push(`  --rail-active-rule: ${rail.activeRule};`)
 for (const [k, v] of Object.entries(logo)) lines.push(`  --logo-${kebab(k)}: ${v};`)
+lines.push(`  --concept-bar-height: ${conceptBar.height};`)
 lines.push(`  --tap-target: ${tapTarget};`)
 lines.push(`  --layout-max: ${layout.maxWidth};`)
 lines.push(`  --layout-gutter: ${layout.gutter};`)

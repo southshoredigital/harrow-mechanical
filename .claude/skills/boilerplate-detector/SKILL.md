@@ -22,7 +22,7 @@ pnpm exec next start -p 3100          # leave running
 node .claude/skills/boilerplate-detector/scan.mjs http://localhost:3100
 ```
 
-It loads every route in the sitemap plus the review routes, at 1440 wide and at 390 wide, and writes `boilerplate-report.json` to the working directory as well as printing a table. Exit code is 1 if any `violation` is found.
+It crawls every page linked from the homepage, at 1440 wide and at 390 wide, and writes `boilerplate-report.json` to the working directory as well as printing a table. Exit code is 1 if any `violation` is found.
 
 What it checks, and the rule each comes from:
 

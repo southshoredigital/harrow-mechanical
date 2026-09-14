@@ -8,6 +8,13 @@ import { company } from "@/content/company"
  * competes with it.
  */
 export const SITE = {
+  /**
+   * The one switch for search engines. This is a concept for a fictional
+   * business, so it stays false: every page is noindex, nofollow, the sitemap
+   * is empty and robots.txt does not advertise it. Flipping it to true is the
+   * whole of the launch change, and the three can never disagree.
+   */
+  indexable: false as boolean,
   name: "Harrow Mechanical",
   url: "https://harrow.southshoredigital.com.au",
   locale: "en_AU",

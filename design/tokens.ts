@@ -259,6 +259,15 @@ export const logo = {
 } as const
 
 /**
+ * The concept disclosure bar, fixed across the top of every page from lg up.
+ * One line of `xs` mono with room above and below. Everything else fixed or
+ * pinned from lg up is offset by this height.
+ */
+export const conceptBar = {
+  height: '2rem',
+} as const
+
+/**
  * Minimum size of anything tapped: filter options, buttons. 44px, the WCAG
  * 2.5.5 target, which matters more than usual for a site read on a phone in
  * a site office.
@@ -296,4 +305,12 @@ export const schematic = {
   strokeActive: color.signal,
   strokeGrid: color.border.hairline,
   labelDelay: 120,
+  /**
+   * Below lg, how long the drawing takes to catch up with the scroll, in ms.
+   * The phone plot runs over only the figure's own height, and touch scroll
+   * is not smoothed, so without this a single fling draws the whole riser in
+   * a frame or two. Still scroll linked: stopping or reversing the scroll
+   * stops or reverses the drawing. From lg the plot tracks scroll exactly.
+   */
+  catchUpNarrow: 800,
 } as const

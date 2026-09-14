@@ -91,10 +91,10 @@ export function SpecRail({ identifier, logo, sections, data, index }: SpecRailPr
         <RailIndex sections={sections} orientation="row" />
       </nav>
 
-      {/* lg and up: fixed rail. */}
+      {/* lg and up: fixed rail, starting below the fixed concept bar. */}
       <aside
         aria-label="Specification"
-        className="fixed inset-y-0 left-0 z-40 hidden w-[var(--rail-width)] flex-col border-r border-border-hairline bg-surface-page px-4 py-6 font-mono text-xs tracking-label uppercase lg:flex"
+        className="fixed top-[var(--concept-bar-height)] bottom-0 left-0 z-40 hidden w-[var(--rail-width)] flex-col border-r border-border-hairline bg-surface-page px-4 py-6 font-mono text-xs tracking-label uppercase lg:flex"
       >
         <Link href="/" prefetch={false} className="focus-ring block self-start">
           <LogoImage

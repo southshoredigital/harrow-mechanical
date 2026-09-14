@@ -4,8 +4,9 @@
  *
  *   node .claude/skills/boilerplate-detector/scan.mjs [baseUrl]
  *
- * Needs a production server running. Routes come from the site's own
- * sitemap, plus the review routes, so nothing is scanned from a stale list.
+ * Needs a production server running. Routes are found by crawling the
+ * site's own links from the homepage, so nothing is scanned from a stale
+ * list, and it works while the sitemap is empty for a noindex concept.
  */
 
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs"
@@ -13,7 +14,6 @@ import { join } from "node:path"
 import { chromium } from "@playwright/test"
 
 const BASE = process.argv[2] ?? "http://localhost:3100"
-const REVIEW_ROUTES = ["/styleguide", "/icons", "/riser"]
 const VIEWPORTS = [
   { name: "1440", width: 1440, height: 900 },
   { name: "390", width: 390, height: 844, isMobile: true, hasTouch: true },
@@ -26,13 +26,34 @@ const flag = (severity, page, viewport, check, detail) =>
 
 /* ---------------------------------------------------------------- routes */
 
-const sitemap = await (await fetch(`${BASE}/sitemap.xml`)).text()
-const CONTENT_ROUTES = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname)
-if (CONTENT_ROUTES.length === 0) {
-  console.error("No routes found in sitemap.xml. Is the server running?")
-  process.exit(2)
+/** Every same origin page reachable by link from the homepage. */
+async function crawl() {
+  const found = new Set(["/"])
+  const queue = ["/"]
+  while (queue.length > 0) {
+    const path = queue.shift()
+    let html
+    try {
+      const response = await fetch(BASE + path)
+      if (!response.ok || !response.headers.get("content-type")?.includes("text/html")) continue
+      html = await response.text()
+    } catch {
+      console.error(`Could not reach ${BASE}${path}. Is the server running?`)
+      process.exit(2)
+    }
+    for (const [, href] of html.matchAll(/<a[^>]+href="([^"#?]+)/g)) {
+      if (!href.startsWith("/") || href.startsWith("//")) continue
+      if (href.startsWith("/api/") || /\.[a-z0-9]+$/i.test(href)) continue
+      if (!found.has(href)) {
+        found.add(href)
+        queue.push(href)
+      }
+    }
+  }
+  return [...found].sort()
 }
-const ROUTES = [...CONTENT_ROUTES, ...REVIEW_ROUTES]
+
+const ROUTES = await crawl()
 
 /* ------------------------------------------------------- source checks */
 

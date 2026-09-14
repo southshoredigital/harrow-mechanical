@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 
 import { SmoothScroll } from "@/components/providers/SmoothScroll"
+import { ConceptBar } from "@/components/sections/ConceptBar"
 import { SiteFooter } from "@/components/sections/SiteFooter"
 import { LOGO } from "@/lib/brand"
 import {
@@ -20,15 +21,15 @@ import "./globals.css"
  * canonical through lib/seo; these apply only where a route has none, such
  * as the 404.
  *
- * `index: false` holds for the whole site: this is a concept for a fictional
- * business and must not be indexed.
+ * Robots comes from SITE.indexable, which is false for this concept: every
+ * page inherits index: false, follow: false. No page overrides it.
  */
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
   title: homeMetadata.title,
   description: homeMetadata.description,
   openGraph: { siteName: SITE.name, locale: SITE.locale, type: "website" },
-  robots: { index: false, follow: false },
+  robots: { index: SITE.indexable, follow: SITE.indexable },
   // The mark alone, straight from public/, so there is one copy of each file.
   // The paper version is listed second: browsers take the last icon whose
   // media matches, so a dark tab bar gets the mark it can show.
@@ -68,22 +69,26 @@ export default function RootLayout({
           Skip to content
         </a>
 
+        <ConceptBar />
+
         {rail}
 
-        <div className="lg:pl-[var(--rail-width)]">
+        {/* From lg the content column starts below the fixed concept bar. */}
+        <div className="lg:pl-[var(--rail-width)] lg:pt-[var(--concept-bar-height)]">
           {/*
             tabIndex allows the skip link to move focus here. outline-none is
             safe on a container that is only ever focused programmatically,
             and every real control keeps its focus ring.
 
             Below lg the scroll margin clears both sticky rail lines, so an
-            anchor jump does not land underneath them. The rail is fixed to the
-            left at lg and up and covers nothing vertically, so the margin goes.
+            anchor jump does not land underneath them. From lg the rail is fixed
+            to the left and covers nothing vertically, but the concept bar is
+            fixed across the top, so the margin clears that instead.
           */}
           <main
             id="main"
             tabIndex={-1}
-            className="scroll-mt-[var(--rail-mobile-total-height)] focus:outline-none lg:scroll-mt-0"
+            className="scroll-mt-[var(--rail-mobile-total-height)] focus:outline-none lg:scroll-mt-[var(--concept-bar-height)]"
           >
             {children}
           </main>

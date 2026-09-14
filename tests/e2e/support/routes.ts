@@ -7,9 +7,6 @@ import { sitemapPaths } from "@/lib/seo/pages"
  */
 export const CONTENT_ROUTES = sitemapPaths()
 
-/** Internal review routes. Still shipped, so still held to the same bar. */
-export const REVIEW_ROUTES = ["/styleguide", "/icons", "/riser"]
-
 export const NOT_FOUND_ROUTE = "/no-such-page"
 
-export const ALL_ROUTES = [...CONTENT_ROUTES, ...REVIEW_ROUTES, NOT_FOUND_ROUTE]
+export const ALL_ROUTES = [...CONTENT_ROUTES, NOT_FOUND_ROUTE]

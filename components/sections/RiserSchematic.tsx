@@ -194,6 +194,13 @@ function screenLength(el: SVGPathElement) {
   return el.getTotalLength() * scale
 }
 
+/** The concept bar's height in pixels, read from its token at refresh. */
+function conceptBarPx() {
+  const root = document.documentElement
+  const rem = parseFloat(getComputedStyle(root).getPropertyValue("--concept-bar-height"))
+  return rem * parseFloat(getComputedStyle(root).fontSize)
+}
+
 /** How far up the riser a level sits, 0 at the plant deck and 1 at the top. */
 function riserFraction(cy: number) {
   return (PLANT_BOX_Y - cy) / (PLANT_BOX_Y - RISER_TOP)
@@ -242,7 +249,9 @@ const NONE_LANDED: LandedState = {
  * so the two are not asked to share the screen. The figure sits in the flow
  * at full width and plots as it scrolls into view, the branch being drawn
  * carrying the active stroke, then settles as a finished monochrome drawing.
- * The three sections follow it as ordinary text.
+ * The drawing eases towards the scroll position over
+ * `schematic.catchUpNarrow` rather than jumping with each fling. The three
+ * sections follow it as ordinary text.
  *
  * Under prefers-reduced-motion the complete diagram is what renders, with no
  * timeline built at all. From lg, active branch tracking still runs: that is
@@ -470,7 +479,13 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
 
           const scrubTrigger = ScrollTrigger.create({
             ...(wide
-              ? { trigger: sequenceRef.current, start: "top top", end: "bottom bottom" }
+              ? {
+                  trigger: sequenceRef.current,
+                  // The pinned figure sits below the fixed concept bar, so the
+                  // sequence starts when it reaches the bar, not the viewport top.
+                  start: () => `top ${conceptBarPx()}px`,
+                  end: "bottom bottom",
+                }
               : {
                   // From the figure's top entering the viewport to its bottom
                   // arriving there: the drawing completes as it comes fully
@@ -479,9 +494,10 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
                   start: "top bottom",
                   end: "bottom bottom",
                 }),
-            scrub: true,
+            // From lg the drawing tracks the scroll exactly. Below lg it eases
+            // towards it, so a fling on a phone draws rather than jumps.
+            scrub: wide ? true : schematic.catchUpNarrow / 1000,
             animation: master,
-            onUpdate: sync,
             onRefresh: sync,
             // A resize rescales the drawing, so the dash lengths have to be
             // measured again before the timeline re-reads its start values.
@@ -491,6 +507,12 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
               master.invalidate()
             },
           })
+
+          // Landing and the live branch follow the drawing itself, not the
+          // scroll: with the eased scrub below lg the timeline is still moving
+          // after the last scroll update, and a label must land when its line
+          // does, not when the finger stopped.
+          master.eventCallback("onUpdate", sync)
 
           // ScrollTrigger.create seeds the animation from the current scroll
           // position synchronously, so this reflects real progress immediately,
@@ -544,7 +566,7 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
           */}
           <div
             ref={figureRef}
-            className="-mx-[var(--layout-gutter)] border-b border-border-hairline bg-surface-page py-4 lg:sticky lg:top-0 lg:z-10 lg:h-[58svh] xl:col-start-2 xl:row-start-1 xl:mx-0 xl:h-svh xl:border-b-0 xl:py-12"
+            className="-mx-[var(--layout-gutter)] border-b border-border-hairline bg-surface-page py-4 lg:sticky lg:top-[var(--concept-bar-height)] lg:z-10 lg:h-[58svh] xl:col-start-2 xl:row-start-1 xl:mx-0 xl:h-[calc(100svh-var(--concept-bar-height))] xl:border-b-0 xl:py-12"
           >
             <svg
               viewBox={VIEW_BOX}
