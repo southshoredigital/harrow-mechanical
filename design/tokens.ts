@@ -76,6 +76,54 @@ export const font = {
 } as const
 
 /**
+ * Fallback faces the page paints in until the web fonts arrive, metric
+ * matched so nothing rewraps or moves when they swap in.
+ *
+ * Measured, not estimated: scripts/measure-font-fallbacks.mjs sets every run
+ * of text the site renders in each face, at its real size and weight, in the
+ * web font and in Arial, and takes the width ratio. next/font's automatic
+ * values come from the font file's average glyph width, which put Cabinet
+ * Grotesk's fallback 7% too wide and rewrapped headings on swap. Rerun the
+ * script and update these when the type or the copy changes substantially.
+ *
+ * `sources` resolves to Arial, or Liberation Sans, its metric twin on Linux.
+ * The family names are repeated as literals in app/fonts.ts, because next/font
+ * only accepts literal options.
+ *
+ * The mono face falls back to Courier New, or Liberation Mono on Linux, which
+ * share its 0.6em advance, so its width needs no adjusting. Its vertical
+ * metrics do: figures sit inside lines of the other two faces, and a line
+ * takes the tallest ascent and descent on it, so unmatched mono metrics grew
+ * every such line by a few pixels on swap.
+ */
+export const fontFallback = {
+  display: {
+    family: 'Cabinet Grotesk Fallback',
+    sources: ['Arial', 'Liberation Sans', 'Helvetica'],
+    sizeAdjust: '96.24%',
+    ascentOverride: '90.40%',
+    descentOverride: '29.09%',
+    lineGapOverride: '0%',
+  },
+  body: {
+    family: 'Switzer Fallback',
+    sources: ['Arial', 'Liberation Sans', 'Helvetica'],
+    sizeAdjust: '102.70%',
+    ascentOverride: '95.42%',
+    descentOverride: '24.34%',
+    lineGapOverride: '0%',
+  },
+  mono: {
+    family: 'JetBrains Mono Fallback',
+    sources: ['Courier New', 'Liberation Mono'],
+    sizeAdjust: '99.98%',
+    ascentOverride: '102.02%',
+    descentOverride: '30.00%',
+    lineGapOverride: '0%',
+  },
+} as const
+
+/**
  * 1.25 ratio from a 16px base.
  * `hero` is used exactly twice on the entire site:
  * the founding year and the project count. Nowhere else.

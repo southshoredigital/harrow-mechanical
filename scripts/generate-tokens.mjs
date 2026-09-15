@@ -17,6 +17,7 @@ import {
     layout,
     logo,
     conceptBar,
+    fontFallback,
 } from '../design/tokens.ts'
 
 const lines = ['@theme {']
@@ -74,6 +75,20 @@ lines.push(`  --layout-max: ${layout.maxWidth};`)
 lines.push(`  --layout-gutter: ${layout.gutter};`)
 lines.push(`  --layout-gutter-wide: ${layout.gutterWide};`)
 lines.push('}')
+
+// Metric matched fallback faces, outside @theme: they are font faces, not
+// theme variables.
+for (const face of Object.values(fontFallback)) {
+    lines.push('')
+    lines.push('@font-face {')
+    lines.push(`  font-family: "${face.family}";`)
+    lines.push(`  src: ${face.sources.map((name) => `local("${name}")`).join(', ')};`)
+    lines.push(`  size-adjust: ${face.sizeAdjust};`)
+    lines.push(`  ascent-override: ${face.ascentOverride};`)
+    lines.push(`  descent-override: ${face.descentOverride};`)
+    lines.push(`  line-gap-override: ${face.lineGapOverride};`)
+    lines.push('}')
+}
 
 writeFileSync('app/tokens.css', lines.join('\n') + '\n')
 console.log('Generated app/tokens.css')
