@@ -108,7 +108,6 @@ function libraryReference() {
   const files = {
     "gsap core": "node_modules/gsap/dist/gsap.min.js",
     ScrollTrigger: "node_modules/gsap/dist/ScrollTrigger.min.js",
-    "@gsap/react": "node_modules/@gsap/react/dist/index.min.js",
     lenis: "node_modules/lenis/dist/lenis.min.js",
   }
   return Object.fromEntries(
@@ -141,22 +140,21 @@ console.table(
     ...row,
     lcp: verdict(row.lcpMs < BUDGET.lcpMs),
     clsOk: verdict(row.cls <= BUDGET.cls),
-    js: verdict(row.jsKb < BUDGET.jsKb),
-    anim: verdict(row.animationKb < BUDGET.animationKb),
+    js: row.route === "/" ? verdict(row.jsKb < BUDGET.jsKb) : "n/a",
+    anim: row.route === "/" ? verdict(row.animationKb < BUDGET.animationKb) : "n/a",
   }))
 )
-console.log("Budget: LCP < 2000ms, CLS <= 0.01, JS < 200KB, animation stack < 40KB (homepage).")
+console.log("Budget: LCP < 2000ms and CLS <= 0.01 on every route; JS < 200KB and animation stack < 40KB on the homepage.")
 console.log("Library reference sizes, gzipped KB:")
 console.table(libraryReference())
 
-// The animation budget is scoped to the homepage by CLAUDE.md; the rest
-// applies to every measured route.
+// The script and animation budgets are scoped to the homepage by CLAUDE.md;
+// LCP and CLS apply to every measured route.
 const failed = rows.filter(
   (row) =>
     row.lcpMs >= BUDGET.lcpMs ||
     row.cls > BUDGET.cls ||
-    row.jsKb >= BUDGET.jsKb ||
-    (row.route === "/" && row.animationKb >= BUDGET.animationKb)
+    (row.route === "/" && (row.jsKb >= BUDGET.jsKb || row.animationKb >= BUDGET.animationKb))
 )
 if (failed.length > 0) {
   console.error(`\nOver budget: ${failed.map((row) => row.route).join(", ")}`)

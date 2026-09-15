@@ -6,6 +6,11 @@
  * budget files itself, so this file turns each line of the budget into an
  * LHCI assertion. Change a budget there, never here.
  *
+ * Each budget entry applies to the pages its `path` matches, in the budget
+ * format's robots.txt style: `*` matches anything and a trailing `$` anchors
+ * the end, so "/*" is every page and "/$" is the homepage alone. The script
+ * budget is homepage only, as CLAUDE.md states it.
+ *
  * Collection uses Lighthouse's mobile emulation (412px, 4x CPU slowdown,
  * slow 4G network): the "mid-range mobile device" the budget is written
  * against.
@@ -24,26 +29,40 @@
 
 // LHCI loads this file as CommonJS, so require is the only import available.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const budget = require("./lighthouse/budget.json")[0]
+const budgets = require("./lighthouse/budget.json")
 
 const PORT = process.env.PORT ?? 3100
 // /about and /contact carry the most type that rewraps on font swap, so they
 // are the pages a CLS regression would show on first.
 const ROUTES = ["/", "/projects", "/capabilities", "/about", "/contact"]
 
-const assertions = {}
-
-for (const { metric, budget: max } of budget.timings) {
-  assertions[metric] = ["error", { maxNumericValue: max, aggregationMethod: "median-run" }]
+/** A budget path, robots.txt style, as a pattern over the full page URL. */
+function urlPattern(path) {
+  const anchored = path.endsWith("$")
+  const body = (anchored ? path.slice(0, -1) : path)
+    .split("*")
+    .map((part) => part.replace(/[.+?^${}()|[\]\\]/g, "\\$&"))
+    .join(".*")
+  return `^https?://[^/]+${body}${anchored ? "$" : ""}`
 }
 
-for (const { resourceType, budget: kb } of budget.resourceSizes) {
-  // Budget files are in KB of transfer size; the audit reports bytes.
-  assertions[`resource-summary:${resourceType}:size`] = [
-    "error",
-    { maxNumericValue: kb * 1024, aggregationMethod: "median-run" },
-  ]
-}
+const assertMatrix = budgets.map(({ path, timings = [], resourceSizes = [] }) => {
+  const assertions = {}
+
+  for (const { metric, budget: max } of timings) {
+    assertions[metric] = ["error", { maxNumericValue: max, aggregationMethod: "median-run" }]
+  }
+
+  for (const { resourceType, budget: kb } of resourceSizes) {
+    // Budget files are in KB of transfer size; the audit reports bytes.
+    assertions[`resource-summary:${resourceType}:size`] = [
+      "error",
+      { maxNumericValue: kb * 1024, aggregationMethod: "median-run" },
+    ]
+  }
+
+  return { matchingUrlPattern: urlPattern(path), assertions }
+})
 
 module.exports = {
   ci: {
@@ -52,7 +71,7 @@ module.exports = {
       numberOfRuns: 3,
       settings: { throttlingMethod: "devtools" },
     },
-    assert: { assertions },
+    assert: { assertMatrix },
     upload: { target: "filesystem", outputDir: ".lighthouseci" },
   },
 }
