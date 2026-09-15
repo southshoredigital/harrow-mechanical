@@ -82,6 +82,57 @@ test.describe("from lg: sticky figure beside the text", () => {
   })
 })
 
+test.describe("from lg: each branch draws while its section is on screen", () => {
+  test.use({ viewport: { width: 1440, height: 900 } })
+
+  test("starts as the section comes into view and lands before it leaves", async ({ page, isMobile }) => {
+    test.skip(isMobile, "Viewport set explicitly; one run is enough.")
+    await page.emulateMedia({ reducedMotion: "no-preference" })
+    await openSettled(page, "/capabilities")
+
+    const keys = ["mechanical", "hydraulic", "controls"] as const
+    const sections = await page.evaluate((names) =>
+      names.map((key) => {
+        const el = document.querySelector(`section[aria-labelledby$="-${key}"]`)!
+        return { top: el.getBoundingClientRect().top + scrollY, height: (el as HTMLElement).offsetHeight }
+      }),
+      [...keys]
+    )
+    const drawn = () =>
+      page.evaluate((names) =>
+        names.map((key) => {
+          const paths = [...document.querySelectorAll(`[data-branch="${key}"] [data-part] path`)]
+          return paths.filter((path) => {
+            const style = getComputedStyle(path)
+            return style.visibility !== "hidden" && !(style.strokeDasharray !== "none" && parseFloat(style.strokeDashoffset) > 1)
+          }).length / paths.length
+        }),
+        [...keys]
+      )
+
+    const start: (number | undefined)[] = []
+    const land: (number | undefined)[] = []
+    const last = sections[2].top + sections[2].height
+    for (let y = 0; y <= last && land[2] === undefined; y += 20) {
+      await page.evaluate((top) => window.scrollTo(0, top), y)
+      await page.waitForTimeout(20)
+      const state = await drawn()
+      state.forEach((fraction, i) => {
+        if (fraction > 0 && start[i] === undefined) start[i] = y
+        if (fraction >= 1 && land[i] === undefined) land[i] = y
+      })
+    }
+
+    keys.forEach((key, i) => {
+      const topOnScreen = sections[i].top - start[i]!
+      const bottomOnScreen = sections[i].top + sections[i].height - land[i]!
+      expect(topOnScreen, `${key} starts with its section top in the lower half of the screen`).toBeGreaterThan(900 / 2)
+      expect(topOnScreen, `${key} starts once its section is on screen`).toBeLessThanOrEqual(900)
+      expect(bottomOnScreen, `${key} lands while its section is still on screen`).toBeGreaterThan(900 / 2)
+    })
+  })
+})
+
 test.describe("lg to xl: figure pinned above the text", () => {
   test.use({ viewport: { width: 1100, height: 800 } })
 

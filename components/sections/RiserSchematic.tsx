@@ -189,13 +189,6 @@ function screenLength(el: SVGPathElement) {
   return el.getTotalLength() * scale
 }
 
-/** The concept bar's height in pixels, read from its token at refresh. */
-function conceptBarPx() {
-  const root = document.documentElement
-  const rem = parseFloat(getComputedStyle(root).getPropertyValue("--concept-bar-height"))
-  return rem * parseFloat(getComputedStyle(root).fontSize)
-}
-
 /** How far up the riser a level sits, 0 at the plant deck and 1 at the top. */
 function riserFraction(cy: number) {
   return (PLANT_BOX_Y - cy) / (PLANT_BOX_Y - RISER_TOP)
@@ -259,11 +252,9 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
    * Wraps only the stacked branch sections and the pinned figure, not the
    * heading above them. From lg the whole scroll sequence is scrubbed against
    * this element's own top and bottom, so it starts and ends at the same
-   * points regardless of how much content sits above it on the page: at the
-   * top of the document there is no scroll position at which this element's
-   * top can already have passed the top of the viewport, so the sequence can
-   * never be pre-elapsed the way it was when each branch scrubbed against its
-   * own "top bottom" to "top 20%" window against the viewport instead.
+   * points relative to the branch text regardless of how much content sits
+   * above it on the page, rather than each branch scrubbing against its own
+   * window against the viewport, which drifted.
    */
   const sequenceRef = useRef<HTMLDivElement>(null)
   /** The figure itself. Below lg the plot is scrubbed against its passage. */
@@ -523,9 +514,12 @@ export function RiserSchematic({ title, branches }: RiserSchematicProps) {
                   ...(wide
                     ? {
                         trigger: sequenceRef.current,
-                        // The pinned figure sits below the fixed concept bar, so the
-                        // sequence starts when it reaches the bar, not the viewport top.
-                        start: () => `top ${conceptBarPx()}px`,
+                        // Starts as the first section's text comes into view, not
+                        // when it reaches the top of the screen. Ending at "bottom
+                        // bottom" keeps the scroll range close to the summed
+                        // section heights the branches are shared across, so each
+                        // branch draws while its own section is on screen.
+                        start: `top ${schematic.startLineWide * 100}%`,
                         end: "bottom bottom",
                       }
                     : {

@@ -313,4 +313,11 @@ export const schematic = {
    * stops or reverses the drawing. From lg the plot tracks scroll exactly.
    */
   catchUpNarrow: 800,
+  /**
+   * From lg, where the plot starts: when the top of the branch text reaches
+   * this fraction of the viewport height. At 0.75 each branch begins drawing
+   * as its section enters the lower quarter of the screen and lands while its
+   * text is still on screen; the plot ends as the figure unpins.
+   */
+  startLineWide: 0.75,
 } as const
